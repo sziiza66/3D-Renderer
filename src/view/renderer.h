@@ -37,7 +37,7 @@ public:
         rasterizer_.Clear();
         memset(frame, 0, rasterizer_.GetHeight() * rasterizer_.GetWidth() * 4);
 
-        for (const auto pair : triangles) {
+        for (const auto& pair : triangles) {
             entity::Triangle transformed_triangle = frustrum_ * cam_inverse * pair.first.GetPos() * pair.second;
             for (uint8_t j = 0; j < 3; ++j) {
                 for (uint8_t i = 0; i < 3; ++i) {

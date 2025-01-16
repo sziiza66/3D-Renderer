@@ -1,8 +1,6 @@
 #pragma once
 #include <Eigen/Dense>
 #include <cassert>
-#include <utility>
-#include <vector>
 
 #include "entity.h"
 

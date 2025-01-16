@@ -6,8 +6,6 @@ namespace entity {
 
 using Plane = Eigen::Vector4d;
 
-using Triangle = Eigen::Matrix<double, 4, 3>;
-
 class Property {
 public:
     Property(const Eigen::Matrix4d& pos, sf::Uint8 r, sf::Uint8 g, sf::Uint8 b);
