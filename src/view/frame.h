@@ -1,16 +1,10 @@
 #pragma once
 
-#include <SFML/Graphics.hpp>
+#include "../model/property.h"
 
 #include <cstddef>
 
 namespace Renderer3D::Kernel {
-
-struct Color {
-    sf::Uint8 r = 0;
-    sf::Uint8 g = 0;
-    sf::Uint8 b = 0;
-};
 
 class Frame {
 public:

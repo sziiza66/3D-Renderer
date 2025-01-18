@@ -1,17 +1,25 @@
 #include "BufferRasterizer.h"
+#include <tuple>
 
 namespace Renderer3D::Kernel {
 namespace {
 
-inline void SetPixel(sf::Uint8* frame, const sf::Uint8* color, size_t x, size_t y, size_t width) {
-    frame[(x * width + y) * 4] = color[0];
-    frame[(x * width + y) * 4 + 1] = color[1];
-    frame[(x * width + y) * 4 + 2] = color[2];
-    frame[(x * width + y) * 4 + 3] = color[3];
+bool IsTriangleInTheFrustrum(const Renderer3D::Kernel::Triangle& triangle) {
+    return abs(triangle(2, 0)) < 1 && abs(triangle(2, 1)) < 1 && abs(triangle(2, 2)) < 1;
 }
 
-inline bool IsTriangleInTheFrustrum(const Renderer3D::Kernel::Triangle& triangle) {
-    return abs(triangle(2, 0)) < 1 && abs(triangle(2, 1)) < 1 && abs(triangle(2, 2)) < 1;
+std::tuple<uint8_t, uint8_t, uint8_t> GetVerticalOrderOfVertices(const Renderer3D::Kernel::Triangle& triangle) {
+    std::tuple<uint8_t, uint8_t, uint8_t> ret = {0, 1, 2};
+    if (triangle(0, std::get<2>(ret)) < triangle(0, std::get<1>(ret))) {
+        std::swap(std::get<2>(ret), std::get<1>(ret));
+    }
+    if (triangle(0, std::get<2>(ret)) < triangle(0, std::get<0>(ret))) {
+        std::swap(std::get<2>(ret), std::get<0>(ret));
+    }
+    if (triangle(0, std::get<1>(ret)) < triangle(0, std::get<0>(ret))) {
+        std::swap(std::get<1>(ret), std::get<0>(ret));
+    }
+    return ret;
 }
 
 void DrawTriangle(Frame& frame, std::vector<double>& z_buffer_, const Renderer3D::Kernel::Triangle& triangle,
@@ -19,25 +27,15 @@ void DrawTriangle(Frame& frame, std::vector<double>& z_buffer_, const Renderer3D
     if (!IsTriangleInTheFrustrum(triangle)) {
         return;
     }
-    uint8_t lowest = 0;
-    uint8_t middle = 1;
-    uint8_t highest = 2;
-    if (triangle(0, highest) < triangle(0, middle)) {
-        std::swap(highest, middle);
-    }
-    if (triangle(0, highest) < triangle(0, lowest)) {
-        std::swap(highest, lowest);
-    }
-    if (triangle(0, middle) < triangle(0, lowest)) {
-        std::swap(middle, lowest);
-    }
 
-    Eigen::Vector3d v1;
-    Eigen::Vector3d v2;
-    for (size_t i = 0; i < 3; ++i) {
-        v1(i) = triangle(i, middle) - triangle(i, lowest);
-        v2(i) = triangle(i, highest) - triangle(i, lowest);
-    }
+    auto [lowest, middle, highest] = GetVerticalOrderOfVertices(triangle);
+
+    Eigen::Vector3d v1 = triangle(middle).head(3) - triangle(lowest).head(3);
+    Eigen::Vector3d v2 = triangle(highest).head(3) - triangle(lowest).head(3);
+    // for (size_t i = 0; i < 3; ++i) {
+    //     v1(i) = triangle(i, middle) - triangle(i, lowest);
+    //     v2(i) = triangle(i, highest) - triangle(i, lowest);
+    // }
     v1 = v1.cross(v2);
     double real_z_diff_y = (v1(2) == 0 ? 0 : -v1(1) / v1(2));
     double z_diff_y = real_z_diff_y * 2 / frame.GetWidth();
@@ -74,7 +72,7 @@ void DrawTriangle(Frame& frame, std::vector<double>& z_buffer_, const Renderer3D
         for (int64_t y = (y1 < 0 ? 0 : y1); y <= (y2 >= edge ? edge : y2); ++y, real_z_cpy += z_diff_y) {
             if (real_z_cpy < z_buffer_[x * frame.GetWidth() + y]) {
                 z_buffer_[x * frame.GetWidth() + y] = real_z_cpy;
-                SetPixel(frame, color, x, y, frame.GetWidth());
+                frame(x, y) = color;
             }
         }
     }
@@ -102,7 +100,7 @@ void DrawTriangle(Frame& frame, std::vector<double>& z_buffer_, const Renderer3D
         for (int64_t y = (y1 < 0 ? 0 : y1); y <= (y2 >= edge ? edge : y2); ++y, real_z_cpy += z_diff_y) {
             if (real_z_cpy < z_buffer_[x * frame.GetWidth() + y]) {
                 z_buffer_[x * frame.GetWidth() + y] = real_z_cpy;
-                SetPixel(frame, color, x, y, frame.GetWidth());
+                frame(x, y) = color;
             }
         }
     }
@@ -115,7 +113,7 @@ Frame BufferRasterizer::MakeFrame(size_t height, size_t width,
     std::vector<double> z_buffer(height * width, std::numeric_limits<double>::infinity());
     Frame frame(height, width);
     for (const auto& pair : triangles) {
-        DrawTriangle(frame, z_buffer, pair.second, pair.first.GetColor());
+        //DrawTriangle(frame, z_buffer, pair.second, pair.first.GetColor());
     }
     return frame;
 }

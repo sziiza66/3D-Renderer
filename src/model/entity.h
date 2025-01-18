@@ -6,37 +6,6 @@ namespace entity {
 
 using Plane = Eigen::Vector4d;
 
-class Property {
-public:
-    Property(const Eigen::Matrix4d& pos, sf::Uint8 r, sf::Uint8 g, sf::Uint8 b);
-
-    Property(Eigen::Matrix4d&& pos, sf::Uint8 r, sf::Uint8 g, sf::Uint8 b);
-
-    Property(const Property& other);
-
-    Property(Property&& other);
-
-    const sf::Uint8* GetColor() const {
-        return color_;
-    }
-
-    sf::Uint8* GetColor() {
-        return color_;
-    }
-
-    const Eigen::Matrix4d& GetPos() const {
-        return pos_;
-    }
-
-    Eigen::Matrix4d& GetPos() {
-        return pos_;
-    }
-
-private:
-    Eigen::Matrix4d pos_;
-    sf::Uint8 color_[4];
-};
-
 class Camera {
 public:
     Camera(double fov, double near_dist, double far_dist, double ratio);

@@ -19,6 +19,10 @@ double Triangle::operator()(long x, long y) const {
     return matrix_(x, y);
 }
 
+Eigen::Vector4d Triangle::operator()(long x) const {
+    return matrix_.col(x);
+}
+
 const Eigen::Matrix<double, 4, 3>& Triangle::GetPointsMatrix() const {
     return matrix_;
 }

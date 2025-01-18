@@ -2,9 +2,8 @@
 
 #include "../model/entity.h"
 
-namespace view {
+namespace Renderer3D::Kernel {
 
-template <typename Rasterizer>
 class Renderer {
 public:
     Renderer(size_t width, size_t height, const entity::Camera& cam) {
@@ -31,7 +30,7 @@ public:
     }
 
     void RenderFrame(sf::Uint8* frame, const Eigen::Matrix4d& camera_pos,
-                     const std::vector<std::pair<entity::Property, entity::Triangle>>& triangles) {
+                     const std::vector<std::pair<entity::Property, Triangle>>& triangles) {
         auto cam_inverse = camera_pos.inverse();
 
         rasterizer_.Clear();
@@ -49,7 +48,7 @@ public:
     }
 
 private:
-    Rasterizer rasterizer_;
+    BufferRasterizer rasterizer_;
     Eigen::Matrix4d frustrum_;
 };
 

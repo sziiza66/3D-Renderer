@@ -9,11 +9,21 @@ public:
 
     explicit Triangle(const Eigen::Matrix<double, 4, 3>& matrix);
 
+    Triangle(const Triangle&) = default;
+
+    Triangle(Triangle&&) = default;
+
+    Triangle& operator=(const Triangle&) = default;
+
+    Triangle& operator=(Triangle&&) = default;
+
     double operator()(long x, long y) const;
+
+    Eigen::Vector4d operator()(long x) const;
 
     [[nodiscard]] const Eigen::Matrix<double, 4, 3>& GetPointsMatrix() const;
 
-private: 
+private:
     void NormalizeFourthCoordinate();
 
 private:

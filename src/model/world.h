@@ -3,8 +3,10 @@
 #include <cassert>
 
 #include "entity.h"
+#include "triangle.h"
+#include "property.h"
 
-namespace model {
+namespace Renderer3D::Kernel {
 
 class World {
 public:
@@ -20,11 +22,11 @@ public:
         camera_ = new entity::Camera(fov, near_dist, far_dist, ratio);
     }
 
-    void PushTriangle(entity::Property&& prop, entity::Triangle&& triangle) {
+    void PushTriangle(Property&& prop, Triangle&& triangle) {
         triangles_.emplace_back(std::move(prop), std::move(triangle));
     }
 
-    void PushTriangle(const entity::Property& prop, const entity::Triangle& triangle) {
+    void PushTriangle(const Property& prop, const Triangle& triangle) {
         triangles_.emplace_back(prop, triangle);
     }
 
@@ -40,12 +42,12 @@ public:
         return camera_pos_;
     }
 
-    const std::vector<std::pair<entity::Property, entity::Triangle>>& GetTriangles() const {
+    const std::vector<std::pair<Property, Triangle>>& GetTriangles() const {
         return triangles_;
     }
 
 private:
-    std::vector<std::pair<entity::Property, entity::Triangle>> triangles_;
+    std::vector<std::pair<Property, Triangle>> triangles_;
     Eigen::Matrix4d camera_pos_;
     entity::Camera* camera_;
 };
