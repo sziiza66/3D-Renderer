@@ -1,4 +1,5 @@
-#include "BufferRasterizer.h"
+#include "rasterizer.h"
+
 #include <tuple>
 
 namespace Renderer3D::Kernel {
@@ -22,20 +23,21 @@ std::tuple<uint8_t, uint8_t, uint8_t> GetVerticalOrderOfVertices(const Renderer3
     return ret;
 }
 
-void DrawTriangle(Frame& frame, std::vector<double>& z_buffer_, const Renderer3D::Kernel::Triangle& triangle,
-                  Color color) {
+void DrawTriangle(Frame& frame, std::vector<double>& z_buffer_, const Triangle& triangle) {
     if (!IsTriangleInTheFrustrum(triangle)) {
         return;
     }
 
     auto [lowest, middle, highest] = GetVerticalOrderOfVertices(triangle);
 
-    Eigen::Vector3d v1 = triangle(middle).head(3) - triangle(lowest).head(3);
-    Eigen::Vector3d v2 = triangle(highest).head(3) - triangle(lowest).head(3);
-    // for (size_t i = 0; i < 3; ++i) {
-    //     v1(i) = triangle(i, middle) - triangle(i, lowest);
-    //     v2(i) = triangle(i, highest) - triangle(i, lowest);
-    // }
+    Eigen::Vector3d v1;
+    Eigen::Vector3d v2;
+    // Eigen::Vector3d v1 = triangle(middle).head(3) - triangle(lowest).head(3);
+    // Eigen::Vector3d v2 = triangle(highest).head(3) - triangle(lowest).head(3);
+    for (size_t i = 0; i < 3; ++i) {
+        v1(i) = triangle(i, middle) - triangle(i, lowest);
+        v2(i) = triangle(i, highest) - triangle(i, lowest);
+    }
     v1 = v1.cross(v2);
     double real_z_diff_y = (v1(2) == 0 ? 0 : -v1(1) / v1(2));
     double z_diff_y = real_z_diff_y * 2 / frame.GetWidth();
@@ -72,7 +74,7 @@ void DrawTriangle(Frame& frame, std::vector<double>& z_buffer_, const Renderer3D
         for (int64_t y = (y1 < 0 ? 0 : y1); y <= (y2 >= edge ? edge : y2); ++y, real_z_cpy += z_diff_y) {
             if (real_z_cpy < z_buffer_[x * frame.GetWidth() + y]) {
                 z_buffer_[x * frame.GetWidth() + y] = real_z_cpy;
-                frame(x, y) = color;
+                frame(x, y) = triangle.GetColor();
             }
         }
     }
@@ -100,7 +102,7 @@ void DrawTriangle(Frame& frame, std::vector<double>& z_buffer_, const Renderer3D
         for (int64_t y = (y1 < 0 ? 0 : y1); y <= (y2 >= edge ? edge : y2); ++y, real_z_cpy += z_diff_y) {
             if (real_z_cpy < z_buffer_[x * frame.GetWidth() + y]) {
                 z_buffer_[x * frame.GetWidth() + y] = real_z_cpy;
-                frame(x, y) = color;
+                frame(x, y) = triangle.GetColor();
             }
         }
     }
@@ -108,12 +110,11 @@ void DrawTriangle(Frame& frame, std::vector<double>& z_buffer_, const Renderer3D
 
 }  // namespace
 
-Frame BufferRasterizer::MakeFrame(size_t height, size_t width,
-                                  const std::vector<std::pair<entity::Property, Triangle>>& triangles) {
+Frame BufferRasterizer::MakeFrame(size_t height, size_t width, const std::vector<Triangle>& triangles) {
     std::vector<double> z_buffer(height * width, std::numeric_limits<double>::infinity());
     Frame frame(height, width);
-    for (const auto& pair : triangles) {
-        //DrawTriangle(frame, z_buffer, pair.second, pair.first.GetColor());
+    for (const auto& triangle : triangles) {
+        DrawTriangle(frame, z_buffer, triangle);
     }
     return frame;
 }

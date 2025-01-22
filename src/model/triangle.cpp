@@ -8,10 +8,10 @@ void Triangle::NormalizeFourthCoordinate() {
     matrix_(3, 2) = 1;
 }
 
-Triangle::Triangle() : matrix_(kDEFAULTTRIANGLE) {
+Triangle::Triangle() : matrix_(kDEFAULTCOORDINATES) {
 }
 
-Triangle::Triangle(const Eigen::Matrix<double, 4, 3>& matrix) : matrix_(matrix) {
+Triangle::Triangle(Matrix matrix, Color color) : matrix_(std::move(matrix)), color_(color) {
     NormalizeFourthCoordinate();
 }
 
@@ -23,10 +23,35 @@ Eigen::Vector4d Triangle::operator()(long x) const {
     return matrix_.col(x);
 }
 
-const Eigen::Matrix<double, 4, 3>& Triangle::GetPointsMatrix() const {
+const Triangle::Matrix& Triangle::GetPointsMatrix() const {
     return matrix_;
 }
 
-const Eigen::Matrix<double, 4, 3> Triangle::kDEFAULTTRIANGLE{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {1, 1, 1}};
+Color Triangle::GetColor() const {
+    return color_;
+}
+
+
+void Triangle::ApplyPosition(const Position& pos) {
+    matrix_ = pos.GetMatrix() * matrix_;
+}
+
+void Triangle::ApplyFrustrum(const Camera& cam) {
+    matrix_ = cam.GetFrustrum() * matrix_;
+    for (uint8_t j = 0; j < 3; ++j) {
+        for (uint8_t i = 0; i < 3; ++i) {
+            matrix_(j, i) /= matrix_(3, i);
+        }
+    }
+    NormalizeFourthCoordinate();
+}
+
+const Triangle::Matrix Triangle::kDEFAULTCOORDINATES{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {1, 1, 1}};
+
+Triangle operator*(const Position& pos, const Triangle& triangle) {
+    Triangle ret = triangle;
+    ret.ApplyPosition(pos);
+    return ret;
+}
 
 }  // namespace Renderer3D::Kernel

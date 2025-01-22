@@ -5,13 +5,25 @@
 namespace Renderer3D::Kernel {
 
 class Position {
+    using Matrix4d = Eigen::Matrix4d;
+    using Matrix3d = Eigen::Matrix3d;
+    using Vector3d = Eigen::Vector3d;
+
 public:
     Position();
 
-    Position(Eigen::Matrix3d orthogonal, Eigen::Vector3d shift);
+    Position(Matrix3d orthogonal, Vector3d shift);
+
+    Position& operator*=(const Position& other);
+
+    [[nodiscard]] const Matrix4d& GetMatrix() const;
+
+    [[nodiscard]] Position Inverse() const;
 
 private:
-    Eigen::Matrix4d matrix_;
+    Matrix4d matrix_;
 };
+
+Position operator*(const Position& lhs, const Position& rhs);
 
 }  // namespace Renderer3D::Kernel

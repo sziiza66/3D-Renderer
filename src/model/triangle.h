@@ -1,36 +1,43 @@
 #pragma once
 #include <Eigen/Dense>
 
+#include "camera.h"
+#include "color.h"
+#include "position.h"
+
 namespace Renderer3D::Kernel {
 
 class Triangle {
+    using Matrix = Eigen::Matrix<double, 4, 3>;
+
 public:
     Triangle();
 
-    explicit Triangle(const Eigen::Matrix<double, 4, 3>& matrix);
-
-    Triangle(const Triangle&) = default;
-
-    Triangle(Triangle&&) = default;
-
-    Triangle& operator=(const Triangle&) = default;
-
-    Triangle& operator=(Triangle&&) = default;
+    explicit Triangle(Matrix matrix, Color color);
 
     double operator()(long x, long y) const;
 
     Eigen::Vector4d operator()(long x) const;
 
-    [[nodiscard]] const Eigen::Matrix<double, 4, 3>& GetPointsMatrix() const;
+    [[nodiscard]] const Matrix& GetPointsMatrix() const;
+
+    [[nodiscard]] Color GetColor() const;
+
+    void ApplyPosition(const Position& pos);
+
+    void ApplyFrustrum(const Camera& cam);
 
 private:
     void NormalizeFourthCoordinate();
 
 private:
-    Eigen::Matrix<double, 4, 3> matrix_;
+    Matrix matrix_;
+    Color color_;
 
 private:
-    const static Eigen::Matrix<double, 4, 3> kDEFAULTTRIANGLE;
+    const static Matrix kDEFAULTCOORDINATES;
 };
+
+Triangle operator*(const Position& pos, const Triangle& triangle);
 
 }  // namespace Renderer3D::Kernel

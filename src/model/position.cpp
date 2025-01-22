@@ -4,10 +4,10 @@
 
 namespace Renderer3D::Kernel {
 
-Position::Position() : matrix_(Eigen::Matrix4d::Identity()) {
+Position::Position() : matrix_(Matrix4d::Identity()) {
 }
 
-Position::Position(Eigen::Matrix3d orthogonal, Eigen::Vector3d shift) {
+Position::Position(Matrix3d orthogonal, Vector3d shift) {
     if (!orthogonal.isUnitary()) {
         throw std::invalid_argument("The motion matrix must be orthogonal when constructing Position.");
     }
@@ -20,6 +20,28 @@ Position::Position(Eigen::Matrix3d orthogonal, Eigen::Vector3d shift) {
         matrix_(i, 3) = shift(i);
     }
     matrix_(3, 3) = 1;
+}
+
+// Во время последовательного перемножения накапливается ошибка, я сделаю функцию коррекции позже, пока что это не
+// кртитично.
+Position& Position::operator*=(const Position& other) {
+    matrix_ *= other.matrix_;
+}
+
+const Position::Matrix4d& Position::GetMatrix() const {
+    return matrix_;
+}
+
+Position Position::Inverse() const {
+    Position ret = *this;
+    ret.matrix_ = ret.matrix_.inverse();
+    return ret;
+}
+
+Position operator*(const Position& lhs, const Position& rhs) {
+    Position ret = lhs;
+    ret *= rhs;
+    return ret;
 }
 
 }  // namespace Renderer3D::Kernel

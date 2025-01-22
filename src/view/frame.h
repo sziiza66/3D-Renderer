@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../model/property.h"
+#include "../model/color.h"
 
 #include <cstddef>
 
