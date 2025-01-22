@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../model/color.h"
+#include "color.h"
 
 #include <cstddef>
 

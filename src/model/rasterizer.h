@@ -1,6 +1,6 @@
 #pragma once
 #include "frame.h"
-#include "../model/triangle.h"
+#include "triangle.h"
 
 namespace Renderer3D::Kernel {
 

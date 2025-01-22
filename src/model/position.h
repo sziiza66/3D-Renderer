@@ -20,6 +20,10 @@ public:
 
     [[nodiscard]] Position Inverse() const;
 
+    Matrix4d& DELETETHIS() {
+        return matrix_;
+    }
+
 private:
     Matrix4d matrix_;
 };

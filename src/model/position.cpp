@@ -26,6 +26,7 @@ Position::Position(Matrix3d orthogonal, Vector3d shift) {
 // кртитично.
 Position& Position::operator*=(const Position& other) {
     matrix_ *= other.matrix_;
+    return *this;
 }
 
 const Position::Matrix4d& Position::GetMatrix() const {
@@ -34,7 +35,7 @@ const Position::Matrix4d& Position::GetMatrix() const {
 
 Position Position::Inverse() const {
     Position ret = *this;
-    ret.matrix_ = ret.matrix_.inverse();
+    ret.matrix_ = ret.matrix_.inverse().eval();
     return ret;
 }
 

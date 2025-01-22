@@ -2,8 +2,8 @@
 
 #include "frame.h"
 #include "rasterizer.h"
-#include "../model/camera.h"
-#include "../model/object.h"
+#include "camera.h"
+#include "object.h"
 
 namespace Renderer3D::Kernel {
 

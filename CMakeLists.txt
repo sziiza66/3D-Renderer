@@ -16,8 +16,14 @@ FetchContent_MakeAvailable(SFML)
 
 SET(SOURCES
     src/main.cpp
-    src/model/entity.cpp
-    src/view/rasterizer.cpp)
+    src/model/camera.cpp
+    src/model/rasterizer.cpp
+    src/model/object.cpp
+    src/model/position.cpp
+    src/model/renderer.cpp
+    src/model/world.cpp
+    src/model/triangle.cpp
+    src/model/frame.cpp)
 
 add_executable(main ${SOURCES})
 target_link_libraries(main PRIVATE sfml-graphics)

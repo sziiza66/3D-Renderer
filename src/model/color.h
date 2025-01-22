@@ -1,7 +1,7 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 
-namespace Renderer3D {
+namespace Renderer3D::Kernel {
 
 // Не знаю, правильно ли сделал, но мне кажется, эта структура должна быть в отдельном файле, потому что нужна она
 // везде, но ни к чему конкретно не принадлежит.
