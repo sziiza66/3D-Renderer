@@ -35,7 +35,7 @@ private:
     Color color_;
 
 private:
-    const static Matrix kDEFAULTCOORDINATES;
+    const static Matrix DefaultCoordinates;
 };
 
 Triangle operator*(const Position& pos, const Triangle& triangle);

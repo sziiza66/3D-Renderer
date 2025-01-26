@@ -9,10 +9,10 @@
 
 int main() {
 
-    constexpr size_t kWidth = 1800;
-    constexpr size_t kHeight = 900;
+    constexpr size_t Width = 1800;
+    constexpr size_t Height = 900;
 
-    Renderer3D::Kernel::Camera camera(std::numbers::pi / 2, 0.1, 1000, static_cast<double>(kWidth) / kHeight);
+    Renderer3D::Kernel::Camera camera(std::numbers::pi / 2, 0.1, 1000, static_cast<double>(Width) / Height);
     Renderer3D::Kernel::Position camera_pos;
     Renderer3D::Kernel::World world;
     Renderer3D::Kernel::Renderer renderer;
@@ -34,12 +34,12 @@ int main() {
     world.PushObject(pos, obj);
 
     sf::Texture texture;
-    if (!texture.create(kWidth, kHeight)) {
+    if (!texture.create(Width, Height)) {
         std::cout << "Unable to create texture.\n";
         return -1;
     }
 
-    std::unique_ptr<sf::Uint8> pixels(new sf::Uint8[kWidth * kHeight * 4]);
+    std::unique_ptr<sf::Uint8> pixels(new sf::Uint8[Width * Height * 4]);
     if (!pixels) {
         std::cout << "Unable to allocate frame.\n";
         return -1;
@@ -49,10 +49,10 @@ int main() {
     sf::Sprite sprite;
     sprite.setTexture(texture);
 
-    sf::RenderWindow window(sf::VideoMode(kWidth, kHeight), "3D Renderer");
+    sf::RenderWindow window(sf::VideoMode(Width, Height), "3D Renderer");
     window.setKeyRepeatEnabled(false);
 
-    Renderer3D::Kernel::Frame frame(kHeight, kWidth);
+    Renderer3D::Kernel::Frame frame(Height, Width);
     frame = renderer.RenderFrame(world.GetObjects(), camera_pos, camera, std::move(frame));
     texture.update(frame.GetPixels());
     window.clear();

@@ -8,7 +8,7 @@ void Triangle::NormalizeFourthCoordinate() {
     matrix_(3, 2) = 1;
 }
 
-Triangle::Triangle() : matrix_(kDEFAULTCOORDINATES) {
+Triangle::Triangle() : matrix_(DefaultCoordinates) {
 }
 
 Triangle::Triangle(Matrix matrix, Color color) : matrix_(std::move(matrix)), color_(color) {
@@ -45,7 +45,7 @@ void Triangle::ApplyFrustrum(const Camera& cam) {
     NormalizeFourthCoordinate();
 }
 
-const Triangle::Matrix Triangle::kDEFAULTCOORDINATES{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {1, 1, 1}};
+const Triangle::Matrix Triangle::DefaultCoordinates{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {1, 1, 1}};
 
 Triangle operator*(const Position& pos, const Triangle& triangle) {
     Triangle ret = triangle;
