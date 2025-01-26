@@ -12,7 +12,7 @@ class Renderer {
 
 public:
     Frame RenderFrame(const std::vector<SubObject>& objects, const Position& camera_pos, const Camera& cam,
-                      size_t height, size_t width);
+                      Frame&& frame);
 
 private:
     BufferRasterizer rasterizer_;

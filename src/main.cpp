@@ -19,9 +19,13 @@ int main() {
 
     Renderer3D::Kernel::Object obj;
 
-    Renderer3D::Kernel::Triangle t1(Eigen::Matrix<double, 4, 3>{{0, 0.5, -0.5}, {0, 0.5, 0.5}, {0, 0.5, -0.5}, {1, 1, 1}}, Renderer3D::Kernel::Color{255, 0, 0});
-    Renderer3D::Kernel::Triangle t2(Eigen::Matrix<double, 4, 3>{{0, 1, 0}, {0, 0, 1}, {0, 0, 0}, {1, 1, 1}}, Renderer3D::Kernel::Color{0, 255, 0});
-    Renderer3D::Kernel::Triangle t3(Eigen::Matrix<double, 4, 3>{{0.4, 0.5, 0}, {1, -1, 0}, {1, 0.5, -4}, {1, 1, 1}}, Renderer3D::Kernel::Color{0, 0, 255});
+    Renderer3D::Kernel::Triangle t1(
+        Eigen::Matrix<double, 4, 3>{{0, 0.5, -0.5}, {0, 0.5, 0.5}, {0, 0.5, -0.5}, {1, 1, 1}},
+        Renderer3D::Kernel::Color{255, 0, 0});
+    Renderer3D::Kernel::Triangle t2(Eigen::Matrix<double, 4, 3>{{0, 1, 0}, {0, 0, 1}, {0, 0, 0}, {1, 1, 1}},
+                                    Renderer3D::Kernel::Color{0, 255, 0});
+    Renderer3D::Kernel::Triangle t3(Eigen::Matrix<double, 4, 3>{{0.4, 0.5, 0}, {1, -1, 0}, {1, 0.5, -4}, {1, 1, 1}},
+                                    Renderer3D::Kernel::Color{0, 0, 255});
 
     obj.PushTriangle(t1);
     obj.PushTriangle(t2);
@@ -48,8 +52,9 @@ int main() {
     sf::RenderWindow window(sf::VideoMode(kWidth, kHeight), "3D Renderer");
     window.setKeyRepeatEnabled(false);
 
-    Renderer3D::Kernel::Frame frame = renderer.RenderFrame(world.GetObjects(), camera_pos, camera, kHeight, kWidth);
-    texture.update(pixels.get());
+    Renderer3D::Kernel::Frame frame(kHeight, kWidth);
+    frame = renderer.RenderFrame(world.GetObjects(), camera_pos, camera, std::move(frame));
+    texture.update(frame.GetPixels());
     window.clear();
     sleep(1);
     window.draw(sprite);
@@ -115,19 +120,16 @@ int main() {
         }
 
         if (is_frame_update_needed) {
-            frame = renderer.RenderFrame(world.GetObjects(), camera_pos, camera, kHeight, kWidth);
-            for (size_t i = 0; i < kHeight; ++i) {
-                for (size_t j = 0; j < kWidth; ++j) {
-                    pixels.get()[4 * (i * kWidth + j) + 0] = frame(i, j).r;
-                    pixels.get()[4 * (i * kWidth + j) + 1] = frame(i, j).g;
-                    pixels.get()[4 * (i * kWidth + j) + 2] = frame(i, j).b;
-                    pixels.get()[4 * (i * kWidth + j) + 3] = 255;
-                    // if (frame(i, j).r != 0 || frame(i, j).g != 0 || frame(i, j).b != 0) {
-                    //     std::cout << "xdd\n";
-                    // }
-                }
-            }
-            texture.update(pixels.get());
+            frame = renderer.RenderFrame(world.GetObjects(), camera_pos, camera, std::move(frame));
+            // for (size_t i = 0; i < kHeight; ++i) {
+            //     for (size_t j = 0; j < kWidth; ++j) {
+            //         pixels.get()[4 * (i * kWidth + j) + 0] = frame(i, j).r;
+            //         pixels.get()[4 * (i * kWidth + j) + 1] = frame(i, j).g;
+            //         pixels.get()[4 * (i * kWidth + j) + 2] = frame(i, j).b;
+            //         pixels.get()[4 * (i * kWidth + j) + 3] = 255;
+            //     }
+            // }
+            texture.update(frame.GetPixels());
             window.clear();
             window.draw(sprite);
             window.display();

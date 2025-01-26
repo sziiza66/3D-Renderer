@@ -8,7 +8,7 @@ class BufferRasterizer {
 public:
     BufferRasterizer() = default;
 
-    Frame MakeFrame(size_t height, size_t width, const std::vector<Triangle>& triangles);
+    Frame MakeFrame(const std::vector<Triangle>& triangles, Frame&& frame);
 };
 
 }  // namespace Renderer3D::Kernel

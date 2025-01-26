@@ -31,7 +31,6 @@ Color Triangle::GetColor() const {
     return color_;
 }
 
-
 void Triangle::ApplyPosition(const Position& pos) {
     matrix_ = pos.GetMatrix() * matrix_;
 }
