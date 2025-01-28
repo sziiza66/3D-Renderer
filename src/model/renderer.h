@@ -16,6 +16,7 @@ public:
 
 private:
     BufferRasterizer rasterizer_;
+    std::vector<Triangle> triangle_buffer_;
 };
 
 }  // namespace Renderer3D::Kernel

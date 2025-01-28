@@ -23,16 +23,16 @@ void FetchTriangles(std::vector<Triangle>* triangles, const std::vector<SubObjec
 Frame Renderer::RenderFrame(const std::vector<SubObject>& objects, const Position& camera_pos, const Camera& cam,
                             Frame&& frame) {
 
-    std::vector<Triangle> triangles;
-    FetchTriangles(&triangles, objects);
+    triangle_buffer_.clear();
+    FetchTriangles(&triangle_buffer_, objects);
     Position cam_inverse = camera_pos.Inverse();
 
-    for (Triangle& triangle : triangles) {
+    for (Triangle& triangle : triangle_buffer_) {
         triangle.ApplyPosition(cam_inverse);
         triangle.ApplyFrustrum(cam);
     }
 
-    return rasterizer_.MakeFrame(triangles, std::move(frame));
+    return rasterizer_.MakeFrame(triangle_buffer_, std::move(frame));
 }
 
 }  // namespace Renderer3D::Kernel

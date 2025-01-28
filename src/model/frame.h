@@ -7,10 +7,10 @@
 namespace Renderer3D::Kernel {
 
 class Frame {
-    // Нужно для специфики sfml, сильно ускоряет вывод данных на экран.
+    // Нужно из-за специфики sfml.
     struct ColorWithAlpha {
         Color color;
-        sf::Uint8 alpha = 255;
+        sf::Uint8 alpha = DefaultAlpha;
     };
 public:
     Frame();
@@ -43,6 +43,9 @@ private:
     std::vector<ColorWithAlpha> data_;
     size_t height_;
     size_t width_;
+
+private:
+    static constexpr sf::Uint8 DefaultAlpha = 255;
 };
 
 }  // namespace Renderer3D::Kernel

@@ -7,7 +7,7 @@ namespace {
 
 constexpr double SideOfTheCube = 2.0;
 
-bool IsTriangleInTheFrustrum(const Renderer3D::Kernel::Triangle& triangle) {
+inline bool IsTriangleInTheFrustrum(const Renderer3D::Kernel::Triangle& triangle) {
     return abs(triangle(2, 0)) < 1 && abs(triangle(2, 1)) < 1 && abs(triangle(2, 2)) < 1;
 }
 
@@ -151,14 +151,14 @@ void DrawTriangle(Frame& frame, std::vector<double>& z_buffer_, const Triangle& 
 }  // namespace
 
 Frame BufferRasterizer::MakeFrame(const std::vector<Triangle>& triangles, Frame&& frame) {
-    std::vector<double> z_buffer(frame.GetHeight() * frame.GetWidth(), std::numeric_limits<double>::infinity());
+    z_buffer_.assign(frame.GetHeight() * frame.GetWidth(), std::numeric_limits<double>::infinity());
     Frame ret(std::move(frame));
     ret.Clear();
     for (const auto& triangle : triangles) {
         // Т.к. я пока что не реализовал клиппинг, логика растерайзера обрабатывает случаи, когда вершины трегольника
         // выходят за границы видимой зоны, когда я реализую клиппинг, эту лишнюю логику можно будет убрать, ну или хотя
         // бы упростить.
-        DrawTriangle(ret, z_buffer, triangle);
+        DrawTriangle(ret, z_buffer_, triangle);
     }
     return ret;
 }

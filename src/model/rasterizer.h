@@ -9,6 +9,9 @@ public:
     BufferRasterizer() = default;
 
     Frame MakeFrame(const std::vector<Triangle>& triangles, Frame&& frame);
+
+private:
+    std::vector<double> z_buffer_;
 };
 
 }  // namespace Renderer3D::Kernel
