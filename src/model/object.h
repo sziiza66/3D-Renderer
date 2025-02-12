@@ -1,6 +1,5 @@
 #pragma once
 #include <vector>
-#include "position.h"
 #include "triangle.h"
 
 namespace Renderer3D::Kernel {
@@ -8,6 +7,8 @@ namespace Renderer3D::Kernel {
 struct SubObject;
 
 class Object {
+    using Position = Eigen::Matrix4d;
+
 public:
     void PushTriangle(Triangle triangle);
 
@@ -24,7 +25,7 @@ private:
 
 // Вообще очень заманчиво сделать указатель на object в целях экономии памяти, не знаю, стоит ли.
 struct SubObject {
-    Position pos;
+    Eigen::Matrix4d pos;
     Object obj;
 };
 

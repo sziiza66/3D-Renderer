@@ -11,4 +11,4 @@ struct Color {
     sf::Uint8 b = 0;
 };
 
-};  // namespace Renderer3D
+};  // namespace Renderer3D::Kernel

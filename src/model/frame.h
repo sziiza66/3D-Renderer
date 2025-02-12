@@ -12,6 +12,7 @@ class Frame {
         Color color;
         sf::Uint8 alpha = DefaultAlpha;
     };
+
 public:
     Frame();
 
@@ -37,7 +38,7 @@ public:
 
     void Clear();
 
-    [[nodiscard]] const sf::Uint8* GetPixels() const;
+    [[nodiscard]] const ColorWithAlpha* GetPixels() const;
 
 private:
     std::vector<ColorWithAlpha> data_;

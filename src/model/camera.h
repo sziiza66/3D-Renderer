@@ -5,6 +5,7 @@ namespace Renderer3D::Kernel {
 
 class Camera {
     using Matrix4d = Eigen::Matrix4d;
+
 public:
     Camera(double fov, double near_dist, double far_dist, double ratio);
 
@@ -22,10 +23,10 @@ public:
 
     [[nodiscard]] double GetBottomIntersectY() const;
 
-    [[nodiscard]] const Matrix4d& GetFrustrum() const;
+    [[nodiscard]] const Matrix4d& GetFrustum() const;
 
 private:
-    Matrix4d frustrum_;
+    Matrix4d frustum_;
     double fov_;
     double near_dist_;
     double far_dist_;

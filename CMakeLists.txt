@@ -19,11 +19,12 @@ SET(SOURCES
     src/model/camera.cpp
     src/model/rasterizer.cpp
     src/model/object.cpp
-    src/model/position.cpp
     src/model/renderer.cpp
     src/model/world.cpp
-    src/model/triangle.cpp
-    src/model/frame.cpp)
+    src/model/frame.cpp
+    src/controller/application.cpp
+    src/view/screen.cpp
+    src/utility/except.cpp)
 
 add_executable(main ${SOURCES})
 target_link_libraries(main PRIVATE sfml-graphics)

@@ -26,13 +26,13 @@ Camera::Camera(double fov, double near_dist, double far_dist, double ratio)
     top_intersect_y_ = ratio * near_dist / proj_dist;
     bottom_intersect_y_ = -ratio * near_dist / proj_dist;
 
-    frustrum_ = Matrix4d{{near_dist_ * 2 / (right_intersect_x_ - left_intersect_x_), 0,
-                          (right_intersect_x_ + left_intersect_x_) / (right_intersect_x_ - left_intersect_x_), 0},
-                         {0, near_dist_ * 2 / (top_intersect_y_ - bottom_intersect_y_),
-                          (top_intersect_y_ + bottom_intersect_y_) / (top_intersect_y_ - bottom_intersect_y_), 0},
-                         {0, 0, -(far_dist_ + near_dist_) / (far_dist_ - near_dist_),
-                          near_dist_ * far_dist_ * 2 / (far_dist_ - near_dist_)},
-                         {0, 0, -1, 0}};
+    frustum_ = Matrix4d{{near_dist_ * 2 / (right_intersect_x_ - left_intersect_x_), 0,
+                         (right_intersect_x_ + left_intersect_x_) / (right_intersect_x_ - left_intersect_x_), 0},
+                        {0, near_dist_ * 2 / (top_intersect_y_ - bottom_intersect_y_),
+                         (top_intersect_y_ + bottom_intersect_y_) / (top_intersect_y_ - bottom_intersect_y_), 0},
+                        {0, 0, -(far_dist_ + near_dist_) / (far_dist_ - near_dist_),
+                         near_dist_ * far_dist_ * 2 / (far_dist_ - near_dist_)},
+                        {0, 0, -1, 0}};
 }
 
 double Camera::GetRatio() const {
@@ -63,8 +63,8 @@ double Camera::GetBottomIntersectY() const {
     return bottom_intersect_y_;
 }
 
-const Camera::Matrix4d& Camera::GetFrustrum() const {
-    return frustrum_;
+const Camera::Matrix4d& Camera::GetFrustum() const {
+    return frustum_;
 }
 
 }  // namespace Renderer3D::Kernel
