@@ -13,8 +13,6 @@ public:
 
     [[nodiscard]] double GetNearDist() const;
 
-    [[nodiscard]] double GetFarDist() const;
-
     [[nodiscard]] double GetLeftIntersectX() const;
 
     [[nodiscard]] double GetRightIntersectX() const;
@@ -29,7 +27,6 @@ private:
     Matrix4d frustum_;
     double fov_;
     double near_dist_;
-    double far_dist_;
     double ratio_;
     double left_intersect_x_;
     double right_intersect_x_;

@@ -1,5 +1,6 @@
 #include "rasterizer.h"
 
+#include <cassert>
 #include <tuple>
 
 namespace Renderer3D::Kernel {
@@ -51,9 +52,12 @@ inline void FillLowerTriangle(const Triangle& triangle, Frame& frame, std::vecto
     double dx = SideOfTheCube / frame.GetHeight();
     for (; real_x < mid_x; ++x, real_x += dx, real_z += z_diff_x) {
         // real_y1, real_y2 -- y координаты отрезка в видимом пространстве, который будет нарисован на экране.
-        double real_y1 = triangle.matrix(1, lowest) + (triangle.matrix(1, highest) - triangle.matrix(1, lowest)) *
-                                                          (real_x - triangle.matrix(0, lowest)) /
-                                                          (triangle.matrix(0, highest) - triangle.matrix(0, lowest));
+        double real_y1 =
+            (triangle.matrix(0, highest) == triangle.matrix(0, lowest)
+                 ? triangle.matrix(1, highest)
+                 : triangle.matrix(1, lowest) + (triangle.matrix(1, highest) - triangle.matrix(1, lowest)) *
+                                                    (real_x - triangle.matrix(0, lowest)) /
+                                                    (triangle.matrix(0, highest) - triangle.matrix(0, lowest)));
         double real_y2 =
             triangle.matrix(0, lowest) == triangle.matrix(0, middle)
                 ? triangle.matrix(1, middle)
@@ -83,9 +87,12 @@ inline void FillUpperTriangle(const Triangle& triangle, Frame& frame, std::vecto
     double dx = SideOfTheCube / frame.GetHeight();
     for (; real_x < top_x; ++x, real_x += dx, real_z += z_diff_x) {
         // real_y1, real_y2 -- y координаты отрезка в видимом пространстве, который будет нарисован на экране.
-        double real_y1 = triangle.matrix(1, lowest) + (triangle.matrix(1, highest) - triangle.matrix(1, lowest)) *
-                                                          (real_x - triangle.matrix(0, lowest)) /
-                                                          (triangle.matrix(0, highest) - triangle.matrix(0, lowest));
+        double real_y1 =
+            (triangle.matrix(0, highest) == triangle.matrix(0, lowest)
+                 ? triangle.matrix(1, highest)
+                 : triangle.matrix(1, lowest) + (triangle.matrix(1, highest) - triangle.matrix(1, lowest)) *
+                                                    (real_x - triangle.matrix(0, lowest)) /
+                                                    (triangle.matrix(0, highest) - triangle.matrix(0, lowest)));
         double real_y2 =
             (triangle.matrix(0, highest) == triangle.matrix(0, middle)
                  ? triangle.matrix(1, highest)
@@ -108,9 +115,6 @@ inline void FillUpperTriangle(const Triangle& triangle, Frame& frame, std::vecto
 }
 
 void DrawTriangle(Frame& frame, std::vector<double>& z_buffer_, const Triangle& triangle) {
-    if (!IsTriangleInTheFrustum(triangle)) {
-        return;
-    }
 
     // Индексы вершин треугольника, отсортированные по Ox.
     auto [lowest, middle, highest] = GetVerticalOrderOfVertices(triangle);
@@ -130,14 +134,15 @@ void DrawTriangle(Frame& frame, std::vector<double>& z_buffer_, const Triangle& 
     // экране сдвинулась на один пиксель.
     // z_diff_x -- аналогично для x.
     // real_x, real_y, real_z -- координаты пооддреживаемой точки в видимом пространстве.
-
     double real_z_diff_y = (v1(2) == 0 ? 0 : -v1(1) / v1(2));
     double z_diff_y = real_z_diff_y * SideOfTheCube / frame.GetWidth();
     double z_diff_x = (v1(2) == 0 ? 0 : -v1(0) / v1(2) * SideOfTheCube / frame.GetHeight());
 
     double real_x = (triangle.matrix(0, lowest) >= -1 ? triangle.matrix(0, lowest) : -1);
     double prev_y = triangle.matrix(1, lowest);
-    double real_z = triangle.matrix(2, lowest) - v1(0) / v1(2) * (real_x - triangle.matrix(0, lowest));
+
+    double real_z =
+        triangle.matrix(2, lowest) - (v1(2) == 0 ? 0 : v1(0) / v1(2)) * (real_x - triangle.matrix(0, lowest));
 
     size_t x = (real_x + 1) / SideOfTheCube * frame.GetHeight();
 

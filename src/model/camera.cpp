@@ -7,7 +7,7 @@
 namespace Renderer3D::Kernel {
 
 Camera::Camera(double fov, double near_dist, double far_dist, double ratio)
-    : fov_(fov), near_dist_(near_dist), far_dist_(far_dist), ratio_(ratio) {
+    : fov_(fov), near_dist_(near_dist), ratio_(ratio) {
     assert(fov > 0);
     assert(fov < std::numbers::pi);
     assert(near_dist > 0);
@@ -30,8 +30,7 @@ Camera::Camera(double fov, double near_dist, double far_dist, double ratio)
                          (right_intersect_x_ + left_intersect_x_) / (right_intersect_x_ - left_intersect_x_), 0},
                         {0, near_dist_ * 2 / (top_intersect_y_ - bottom_intersect_y_),
                          (top_intersect_y_ + bottom_intersect_y_) / (top_intersect_y_ - bottom_intersect_y_), 0},
-                        {0, 0, -(far_dist_ + near_dist_) / (far_dist_ - near_dist_),
-                         near_dist_ * far_dist_ * 2 / (far_dist_ - near_dist_)},
+                        {0, 0, -1, near_dist_ * 2},
                         {0, 0, -1, 0}};
 }
 
@@ -41,10 +40,6 @@ double Camera::GetRatio() const {
 
 double Camera::GetNearDist() const {
     return near_dist_;
-}
-
-double Camera::GetFarDist() const {
-    return far_dist_;
 }
 
 double Camera::GetLeftIntersectX() const {
