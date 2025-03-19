@@ -8,11 +8,9 @@
 namespace Renderer3D::Kernel {
 
 class Renderer {
-    using Matrix4d = Eigen::Matrix4d;
-    using Position = Matrix4d;
 
 public:
-    Frame RenderFrame(const std::vector<SubObject>& objects, const Position& camera_pos, const Camera& cam,
+    Frame RenderFrame(const std::vector<SubObject>& objects, const Matrix4& camera_pos, const Camera& cam,
                       Frame&& frame);
 
 private:

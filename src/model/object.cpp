@@ -6,7 +6,7 @@ void Object::PushTriangle(Triangle triangle) {
     triangles_.emplace_back(std::move(triangle));
 }
 
-void Object::PushSubObject(Position pos, Object obj) {
+void Object::PushSubObject(Matrix4 pos, Object obj) {
     subobjects_.emplace_back(std::move(pos), std::move(obj));
 }
 

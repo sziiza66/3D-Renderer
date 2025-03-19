@@ -2,7 +2,7 @@
 
 namespace Renderer3D::Kernel {
 
-void World::PushObject(Position pos, Object obj) {
+void World::PushObject(Matrix4 pos, Object obj) {
     objects_.emplace_back(std::move(pos), std::move(obj));
 }
 

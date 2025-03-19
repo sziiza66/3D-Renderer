@@ -22,13 +22,12 @@ SET(SOURCES
     src/model/renderer.cpp
     src/model/world.cpp
     src/model/frame.cpp
-    src/controller/application.cpp
+    src/application.cpp
     src/view/screen.cpp
     src/utility/except.cpp)
 
 add_executable(main ${SOURCES})
 target_link_libraries(main PRIVATE sfml-graphics)
-target_compile_features(main PRIVATE cxx_std_20)
 
 if(WIN32)
     add_custom_command(

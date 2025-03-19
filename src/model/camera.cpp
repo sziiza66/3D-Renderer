@@ -21,12 +21,13 @@ Camera::Camera(double fov, double near_dist, double far_dist, double ratio)
     double proj_dist2 = proj_dist * proj_dist;
     double ratio2 = ratio * ratio;
 
-    left_intersect_x_ = -near_dist_ / proj_dist;
+    // Проблема
+    left_intersect_x_ = -near_dist / proj_dist;
     right_intersect_x_ = near_dist / proj_dist;
     top_intersect_y_ = ratio * near_dist / proj_dist;
     bottom_intersect_y_ = -ratio * near_dist / proj_dist;
 
-    frustum_ = Matrix4d{{near_dist_ * 2 / (right_intersect_x_ - left_intersect_x_), 0,
+    frustum_matrix_ = Matrix4{{near_dist_ * 2 / (right_intersect_x_ - left_intersect_x_), 0,
                          (right_intersect_x_ + left_intersect_x_) / (right_intersect_x_ - left_intersect_x_), 0},
                         {0, near_dist_ * 2 / (top_intersect_y_ - bottom_intersect_y_),
                          (top_intersect_y_ + bottom_intersect_y_) / (top_intersect_y_ - bottom_intersect_y_), 0},
@@ -58,8 +59,8 @@ double Camera::GetBottomIntersectY() const {
     return bottom_intersect_y_;
 }
 
-const Camera::Matrix4d& Camera::GetFrustum() const {
-    return frustum_;
+const Matrix4& Camera::GetFrustumMatrix() const {
+    return frustum_matrix_;
 }
 
 }  // namespace Renderer3D::Kernel

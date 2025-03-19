@@ -1,10 +1,10 @@
 #pragma once
-#include <Eigen/Dense>
+
+#include "../linalg.h"
 
 namespace Renderer3D::Kernel {
 
 class Camera {
-    using Matrix4d = Eigen::Matrix4d;
 
 public:
     Camera(double fov, double near_dist, double far_dist, double ratio);
@@ -21,10 +21,10 @@ public:
 
     [[nodiscard]] double GetBottomIntersectY() const;
 
-    [[nodiscard]] const Matrix4d& GetFrustum() const;
+    [[nodiscard]] const Matrix4& GetFrustumMatrix() const;
 
 private:
-    Matrix4d frustum_;
+    Matrix4 frustum_matrix_;
     double fov_;
     double near_dist_;
     double ratio_;

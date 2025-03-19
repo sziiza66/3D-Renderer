@@ -1,7 +1,7 @@
 #pragma once
-#include <Eigen/Dense>
 
 #include "color.h"
+#include "../linalg.h"
 
 namespace Renderer3D::Kernel {
 
@@ -9,7 +9,7 @@ namespace Renderer3D::Kernel {
 // object.h, но надо ли? Потом object.h придётся инклюдить в рендер и растерайзер, а им не нужен Object, нужен только
 // Triangle. Печально, что c++ не поддерживает include classname from file.h.
 struct Triangle {
-    Eigen::Matrix<double, 4, 3> matrix;
+    TriMatrix matrix;
     Color color;
 };
 

@@ -7,12 +7,11 @@ namespace Renderer3D::Kernel {
 struct SubObject;
 
 class Object {
-    using Position = Eigen::Matrix4d;
 
 public:
     void PushTriangle(Triangle triangle);
 
-    void PushSubObject(Position pos, Object obj);
+    void PushSubObject(Matrix4 pos, Object obj);
 
     [[nodiscard]] const std::vector<Triangle>& GetTriangles() const;
 
@@ -25,7 +24,7 @@ private:
 
 // Вообще очень заманчиво сделать указатель на object в целях экономии памяти, не знаю, стоит ли.
 struct SubObject {
-    Eigen::Matrix4d pos;
+    Matrix4 pos;
     Object obj;
 };
 

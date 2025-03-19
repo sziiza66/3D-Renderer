@@ -8,7 +8,7 @@ namespace Renderer3D::Kernel {
 namespace {
 
 void ApplyFrustum(Triangle& triangle, const Camera& cam) {
-    triangle.matrix = cam.GetFrustum() * triangle.matrix;
+    triangle.matrix = cam.GetFrustumMatrix() * triangle.matrix;
     for (uint8_t j = 0; j < 3; ++j) {
         for (uint8_t i = 0; i < 3; ++i) {
             triangle.matrix(j, i) = (triangle.matrix(3, i) != 0 ? triangle.matrix(j, i) / triangle.matrix(3, i) : 0);
@@ -16,7 +16,7 @@ void ApplyFrustum(Triangle& triangle, const Camera& cam) {
     }
 }
 
-inline void ClipWhen2BadPoints(std::vector<Triangle>& triangles, double near_dist, int8_t bad1, int8_t bad2,
+void ClipWhen2BadPoints(std::vector<Triangle>& triangles, double near_dist, int8_t bad1, int8_t bad2,
                                int8_t good) {
     // Этот ассёрт не должен в теории никогда срабатывать, но пусть будет.
     assert(triangles.back().matrix(2, bad1) - triangles.back().matrix(2, good) != 0);
@@ -36,12 +36,12 @@ inline void ClipWhen2BadPoints(std::vector<Triangle>& triangles, double near_dis
     triangles.back().matrix(2, bad2) = near_dist;
 }
 
-inline void ClipWhen1BadPoint(std::vector<Triangle>& triangles, double near_dist, int8_t bad, int8_t good1,
+void ClipWhen1BadPoint(std::vector<Triangle>& triangles, double near_dist, int8_t bad, int8_t good1,
                               int8_t good2) {
     // Этот ассёрт не должен в теории никогда срабатывать, но пусть будет.
     assert(triangles.back().matrix(2, bad) - triangles.back().matrix(2, good1) != 0);
 
-    Eigen::Vector4d v_bad2 = triangles.back().matrix.col(bad);
+    Vector4 v_bad2 = triangles.back().matrix.col(bad);
 
     triangles.back().matrix.col(bad) =
         triangles.back().matrix.col(good1) + (triangles.back().matrix.col(bad) - triangles.back().matrix.col(good1)) *
@@ -62,7 +62,7 @@ inline void ClipWhen1BadPoint(std::vector<Triangle>& triangles, double near_dist
     triangles.back().matrix(2, bad) = near_dist;
 }
 
-inline void ClipAgainstZAxis(std::vector<Triangle>& triangles, size_t ind, double near_dist) {
+void ClipAgainstZAxis(std::vector<Triangle>& triangles, size_t ind, double near_dist) {
     int8_t bad1 = -1;
     int8_t bad2 = -1;
     int8_t good1 = -1;
@@ -110,12 +110,12 @@ void FetchTriangles(std::vector<Triangle>& triangles, const std::vector<SubObjec
 
 }  // namespace
 
-Frame Renderer::RenderFrame(const std::vector<SubObject>& objects, const Position& camera_pos, const Camera& cam,
+Frame Renderer::RenderFrame(const std::vector<SubObject>& objects, const Matrix4& camera_pos, const Camera& cam,
                             Frame&& frame) {
 
     triangle_buffer_.clear();
     FetchTriangles(triangle_buffer_, objects);
-    Position cam_inverse = camera_pos.inverse();
+    Matrix4 cam_inverse = camera_pos.inverse();
 
     for (Triangle& triangle : triangle_buffer_) {
         triangle.matrix = cam_inverse * triangle.matrix;

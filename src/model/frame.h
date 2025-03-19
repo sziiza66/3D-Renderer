@@ -2,51 +2,43 @@
 
 #include "color.h"
 
-#include <cstddef>
-
 namespace Renderer3D::Kernel {
 
 class Frame {
     // Нужно из-за специфики sfml.
     struct ColorWithAlpha {
         Color color;
-        sf::Uint8 alpha = DefaultAlpha;
+        sf::Uint8 alpha = kDefaultAlpha;
     };
 
 public:
     Frame();
 
-    Frame(size_t height, size_t width);
+    Frame(ssize_t height, ssize_t width);
 
-    Frame(const Frame&) = default;
+    Color& operator()(ssize_t x, ssize_t y);
 
-    Frame(Frame&&) noexcept = default;
+    const Color& operator()(ssize_t x, ssize_t y) const;
 
-    Frame& operator=(const Frame&) = default;
+    [[nodiscard]] ssize_t GetHeight() const;
 
-    Frame& operator=(Frame&&) noexcept = default;
-
-    ~Frame() = default;
-
-    Color& operator()(size_t x, size_t y);
-
-    const Color& operator()(size_t x, size_t y) const;
-
-    [[nodiscard]] size_t GetHeight() const;
-
-    [[nodiscard]] size_t GetWidth() const;
+    [[nodiscard]] ssize_t GetWidth() const;
 
     void Clear();
 
     [[nodiscard]] const ColorWithAlpha* GetPixels() const;
 
-private:
-    std::vector<ColorWithAlpha> data_;
-    size_t height_;
-    size_t width_;
+    [[nodiscard]] ssize_t CalcYDiscreteFromRealSegment(double y, double segment_length) const;
+
+    [[nodiscard]] ssize_t CalcXDiscreteFromRealSegment(double x, double segment_length) const;
 
 private:
-    static constexpr sf::Uint8 DefaultAlpha = 255;
+    static constexpr sf::Uint8 kDefaultAlpha = 255;
+
+private:
+    std::vector<ColorWithAlpha> data_;
+    ssize_t height_;
+    ssize_t width_;
 };
 
 }  // namespace Renderer3D::Kernel
