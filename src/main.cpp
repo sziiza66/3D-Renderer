@@ -2,7 +2,6 @@
 #include "utility/except.h"
 
 int main() {
-
     try {
         Renderer3D::Application app;
         app.Run();

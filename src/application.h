@@ -6,7 +6,6 @@
 #include "view/screen.h"
 #include "model/renderer.h"
 
-// Я не уверен, точно ли Application должен быть в GUI, но у меня он обрабатывает управление, так что видимо да...
 namespace Renderer3D {
 
 class Application {
@@ -16,22 +15,8 @@ class Application {
     using Renderer = Kernel::Renderer;
     using Object = Kernel::Object;
     using Color = Kernel::Color;
-    using Height = GUI::Screen::Height;
-    using Width = GUI::Screen::Width;
     using Screen = GUI::Screen;
     using Frame = Kernel::Frame;
-
-    struct Model {
-        World world;
-        Camera camera;
-        Matrix4 camera_pos;
-        Renderer renderer;
-    };
-
-    struct View {
-        Screen screen;
-        Frame frame;
-    };
 
 public:
     Application();
@@ -39,6 +24,8 @@ public:
     void Run();
 
 private:
+    static Camera DefaultCamera();
+
     void HandleLeft(double);
     void HandleRight(double);
     void HandleForward(double);
@@ -48,18 +35,22 @@ private:
     void UpdateFrame();
 
 private:
-    static constexpr size_t kWidth = 1800;
-    static constexpr size_t kHeight = 900;
+    static constexpr size_t kScreenWidth = 1800;
+    static constexpr size_t kScreenHeight = 900;
     static constexpr double kNearPlaneDistance = 0.1;
     static constexpr double kFarPlaneDistance = 1000;
-    static constexpr double kMovementCoefficient = 0.01;
+    static constexpr double kMovementSpeedCoefficient = 0.01;
     static constexpr double kAngleCoefficient = 180;
-    static const Matrix4 kRightTurn;
-    static const Matrix4 kLeftTurn;
+    static const HomoTransform kRightTurn;
+    static const HomoTransform kLeftTurn;
 
 private:
-    Model model_;
-    View view_;
+    World world_;
+    Camera camera_;
+    HomoTransform camera_pos_;
+    Renderer renderer_;
+    Screen screen_;
+    Frame frame_;
 };
 
 }  // namespace Renderer3D

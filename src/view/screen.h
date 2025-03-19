@@ -10,17 +10,11 @@ class Screen {
     using Frame = Renderer3D::Kernel::Frame;
 
 public:
-    enum class Height : unsigned int;
-    enum class Width : unsigned int;
-
-    Screen(Height height, Width width);
+    Screen(ScreenHeight height, ScreenWidth width);
 
     void Display(const Frame& frame);
-
     void CloseWindow();
-
     bool PollWindowEvent(sf::Event& event);
-
     bool IsWindowOpen();
 
 private:

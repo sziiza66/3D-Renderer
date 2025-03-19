@@ -2,13 +2,16 @@
 
 namespace Renderer3D::Kernel {
 
-Frame::Frame() : data_(1), height_(1), width_(1) {
+namespace {
+
+ssize_t MakeAtLeastOne(ssize_t sz) {
+    return sz <= 0 ? 1 : sz;
 }
 
-Frame::Frame(ssize_t height, ssize_t width)
-    : data_((height <= 0 ? 1 : height) * (width <= 0 ? 1 : width)),
-      height_((height <= 0 ? 1 : height)),
-      width_((width <= 0 ? 1 : width)) {
+} // namespace
+
+Frame::Frame(FrameHeight height, FrameWidth width)
+    : data_(MakeAtLeastOne(height) * MakeAtLeastOne(width)), width_(MakeAtLeastOne(width)) {
 }
 
 Color& Frame::operator()(ssize_t x, ssize_t y) {
@@ -19,19 +22,19 @@ const Color& Frame::operator()(ssize_t x, ssize_t y) const {
     return data_[x * width_ + y].color;
 }
 
+void Frame::FillWithBlackColor() {
+    data_.assign(data_.size(), kWhite);
+}
+
 ssize_t Frame::GetHeight() const {
-    return height_;
+    return data_.size() / (width_ == 0 ? 1 : width_);
 }
 
 ssize_t Frame::GetWidth() const {
     return width_;
 }
 
-void Frame::Clear() {
-    data_.assign(data_.size(), {0, 0, 0, kDefaultAlpha});
-}
-
-const Frame::ColorWithAlpha* Frame::GetPixels() const {
+const Frame::ColorWithAlpha* Frame::Data() const {
     return data_.data();
 }
 
@@ -40,7 +43,7 @@ ssize_t Frame::CalcYDiscreteFromRealSegment(double y, double segment_length) con
 }
 
 ssize_t Frame::CalcXDiscreteFromRealSegment(double x, double segment_length) const {
-    return height_ * ((x + 1) / segment_length);
+    return GetHeight() * ((x + 1) / segment_length);
 }
 
 }  // namespace Renderer3D::Kernel

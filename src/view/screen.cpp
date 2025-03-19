@@ -5,12 +5,11 @@
 
 namespace Renderer3D::GUI {
 
-Screen::Screen(Height height, Width width)
-    : window_(sf::VideoMode(static_cast<unsigned int>(width), static_cast<unsigned int>(height)), "3D Renderer") {
-    assert(static_cast<unsigned int>(height) != 0);
-    assert(static_cast<unsigned int>(width) != 0);
+Screen::Screen(ScreenHeight height, ScreenWidth width) : window_(sf::VideoMode(width, height), "3D Renderer") {
+    assert(height != 0);
+    assert(width != 0);
 
-    if (!texture_.create(static_cast<unsigned int>(width), static_cast<unsigned int>(height))) {
+    if (!texture_.create(width, height)) {
         throw std::runtime_error("Unable to create texture.\n");
     }
     sprite_.setTexture(texture_);
@@ -24,7 +23,7 @@ void Screen::Display(const Frame& frame) {
     // функцию, принимающую Color и координаты пикселя, всё, чтобы не использовать этот каст, но рендер стал рабтать
     // заметно медленнее. Это техничеки не UB, как я понял, но если есть способ это убрать и оставить
     // производительность, хотел бы использовать его, подскажи, пожалуйста.
-    texture_.update(reinterpret_cast<const sf::Uint8*>(frame.GetPixels()));
+    texture_.update(reinterpret_cast<const sf::Uint8*>(frame.Data()));
     window_.clear();
     window_.draw(sprite_);
     window_.display();

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../linalg.h"
+#include "../aliases.h"
 
 namespace Renderer3D::Kernel {
 
@@ -10,17 +10,11 @@ public:
     Camera(double fov, double near_dist, double far_dist, double ratio);
 
     [[nodiscard]] double GetRatio() const;
-
     [[nodiscard]] double GetNearDist() const;
-
     [[nodiscard]] double GetLeftIntersectX() const;
-
     [[nodiscard]] double GetRightIntersectX() const;
-
     [[nodiscard]] double GetTopIntersectY() const;
-
     [[nodiscard]] double GetBottomIntersectY() const;
-
     [[nodiscard]] const Matrix4& GetFrustumMatrix() const;
 
 private:
