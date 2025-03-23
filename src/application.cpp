@@ -4,7 +4,7 @@ namespace Renderer3D {
 
 Application::Application()
     : camera_(DefaultCamera()),
-      camera_pos_(HomoTransform::Identity()),
+      camera_pos_(AffineTransform::Identity()),
       screen_(ScreenHeight{kScreenHeight}, ScreenWidth{kScreenWidth}),
       frame_(FrameHeight{kScreenHeight}, FrameWidth{kScreenWidth}) {
     // Магические числа, да, потом буду мир в файле хранить, а тут читать.
@@ -16,7 +16,7 @@ Application::Application()
     obj.PushTriangle(t1);
     obj.PushTriangle(t2);
     obj.PushTriangle(t3);
-    HomoTransform pos = HomoTransform::Identity();
+    AffineTransform pos = AffineTransform::Identity();
     world_.PushObject(pos, std::move(obj));
 }
 
@@ -97,7 +97,7 @@ void Application::UpdateFrame() {
     screen_.Display(frame_);
 }
 
-const HomoTransform Application::kRightTurn{Eigen::AngleAxisd(std::numbers::pi / kAngleCoefficient, Vector3::UnitX())};
-const HomoTransform Application::kLeftTurn{kRightTurn.inverse()};
+const AffineTransform Application::kRightTurn{Eigen::AngleAxisd(std::numbers::pi / kAngleCoefficient, Vector3::UnitX())};
+const AffineTransform Application::kLeftTurn{kRightTurn.inverse()};
 
 }  // namespace Renderer3D

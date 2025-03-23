@@ -10,7 +10,7 @@ class Object {
 
 public:
     void PushTriangle(Triangle triangle);
-    void PushSubObject(HomoTransform pos, Object obj);
+    void PushSubObject(AffineTransform pos, Object obj);
 
     [[nodiscard]] const std::vector<Triangle>& GetTriangles() const;
     [[nodiscard]] const std::vector<SubObject>& GetSubobjects() const;
@@ -20,9 +20,8 @@ private:
     std::vector<SubObject> subobjects_;
 };
 
-// Вообще очень заманчиво сделать указатель на object в целях экономии памяти, не знаю, стоит ли.
 struct SubObject {
-    HomoTransform pos;
+    AffineTransform pos;
     Object obj;
 };
 

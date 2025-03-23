@@ -41,13 +41,13 @@ private:
     static constexpr double kFarPlaneDistance = 1000;
     static constexpr double kMovementSpeedCoefficient = 0.01;
     static constexpr double kAngleCoefficient = 180;
-    static const HomoTransform kRightTurn;
-    static const HomoTransform kLeftTurn;
+    static const AffineTransform kRightTurn;
+    static const AffineTransform kLeftTurn;
 
 private:
     World world_;
     Camera camera_;
-    HomoTransform camera_pos_;
+    AffineTransform camera_pos_;
     Renderer renderer_;
     Screen screen_;
     Frame frame_;

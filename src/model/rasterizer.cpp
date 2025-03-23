@@ -7,8 +7,11 @@ namespace {
 
 constexpr double kSideOfTheCube = 2.0;
 
-std::array<uint8_t, 3> GetVerticalOrderOfVertices(const Triangle& triangle) {
+using VectorRef = const Eigen::Block<const Eigen::Matrix<double, 4, 3>, 4, 1, true>;
+
+auto GetVerticalOrderOfVertices(const Triangle& triangle) {
     std::array<uint8_t, 3> ret = {0, 1, 2};
+
     if (triangle.vertices(0, ret[2]) < triangle.vertices(0, ret[1])) {
         std::swap(ret[2], ret[1]);
     }
@@ -18,7 +21,9 @@ std::array<uint8_t, 3> GetVerticalOrderOfVertices(const Triangle& triangle) {
     if (triangle.vertices(0, ret[1]) < triangle.vertices(0, ret[0])) {
         std::swap(ret[1], ret[0]);
     }
-    return ret;
+
+    return std::array<VectorRef, 3>{triangle.vertices.col(ret[0]), triangle.vertices.col(ret[1]),
+                                    triangle.vertices.col(ret[2])};
 }
 
 void FillSegment(const Triangle& triangle, Frame& frame, std::vector<double>& z_buffer_, ssize_t x, double real_y1,
@@ -46,25 +51,19 @@ void FillSegment(const Triangle& triangle, Frame& frame, std::vector<double>& z_
     }
 }
 
-void FillLowerTriangle(const Triangle& triangle, Frame& frame, std::vector<double>& z_buffer_, uint8_t lowest,
-                       uint8_t middle, uint8_t highest, double real_z_diff_y, double z_diff_y, double z_diff_x,
+void FillLowerTriangle(const Triangle& triangle, Frame& frame, std::vector<double>& z_buffer_, VectorRef lowest,
+                       VectorRef middle, VectorRef highest, double real_z_diff_y, double z_diff_y, double z_diff_x,
                        double& real_x, double& real_z, ssize_t& x, double& prev_y) {
-    double mid_x = (triangle.vertices(0, middle) <= 1 ? triangle.vertices(0, middle) : 1);
+    double mid_x = (middle(0) <= 1 ? middle(0) : 1);
     double dx = kSideOfTheCube / frame.GetHeight();
     for (; real_x < mid_x; ++x, real_x += dx, real_z += z_diff_x) {
         // real_y1, real_y2 -- y координаты отрезка в видимом пространстве, который будет нарисован на экране.
-        double real_y1 =
-            (triangle.vertices(0, highest) == triangle.vertices(0, lowest)
-                 ? triangle.vertices(1, highest)
-                 : triangle.vertices(1, lowest) + (triangle.vertices(1, highest) - triangle.vertices(1, lowest)) *
-                                                      (real_x - triangle.vertices(0, lowest)) /
-                                                      (triangle.vertices(0, highest) - triangle.vertices(0, lowest)));
-        double real_y2 =
-            triangle.vertices(0, lowest) == triangle.vertices(0, middle)
-                ? triangle.vertices(1, middle)
-                : (triangle.vertices(1, lowest) + (triangle.vertices(1, middle) - triangle.vertices(1, lowest)) *
-                                                      (real_x - triangle.vertices(0, lowest)) /
-                                                      (triangle.vertices(0, middle) - triangle.vertices(0, lowest)));
+        double real_y1 = (highest(0) == lowest(0)
+                              ? highest(1)
+                              : lowest(1) + (highest(1) - lowest(1)) * (real_x - lowest(0)) / (highest(0) - lowest(0)));
+        double real_y2 = lowest(0) == middle(0)
+                             ? middle(1)
+                             : (lowest(1) + (middle(1) - lowest(1)) * (real_x - lowest(0)) / (middle(0) - lowest(0)));
 
         if (real_y1 > real_y2) {
             std::swap(real_y1, real_y2);
@@ -81,25 +80,20 @@ void FillLowerTriangle(const Triangle& triangle, Frame& frame, std::vector<doubl
     }
 }
 
-void FillUpperTriangle(const Triangle& triangle, Frame& frame, std::vector<double>& z_buffer_, uint8_t lowest,
-                       uint8_t middle, uint8_t highest, double real_z_diff_y, double z_diff_y, double z_diff_x,
+void FillUpperTriangle(const Triangle& triangle, Frame& frame, std::vector<double>& z_buffer_, VectorRef lowest,
+                       VectorRef middle, VectorRef highest, double real_z_diff_y, double z_diff_y, double z_diff_x,
                        double& real_x, double& real_z, ssize_t& x, double& prev_y) {
-    double top_x = (triangle.vertices(0, highest) <= 1 ? triangle.vertices(0, highest) : 1);
+    double top_x = (highest(0) <= 1 ? highest(0) : 1);
     double dx = kSideOfTheCube / frame.GetHeight();
     for (; real_x < top_x; ++x, real_x += dx, real_z += z_diff_x) {
         // real_y1, real_y2 -- y координаты отрезка в видимом пространстве, который будет нарисован на экране.
-        double real_y1 =
-            (triangle.vertices(0, highest) == triangle.vertices(0, lowest)
-                 ? triangle.vertices(1, highest)
-                 : triangle.vertices(1, lowest) + (triangle.vertices(1, highest) - triangle.vertices(1, lowest)) *
-                                                      (real_x - triangle.vertices(0, lowest)) /
-                                                      (triangle.vertices(0, highest) - triangle.vertices(0, lowest)));
+        double real_y1 = (highest(0) == lowest(0)
+                              ? highest(1)
+                              : lowest(1) + (highest(1) - lowest(1)) * (real_x - lowest(0)) / (highest(0) - lowest(0)));
         double real_y2 =
-            (triangle.vertices(0, highest) == triangle.vertices(0, middle)
-                 ? triangle.vertices(1, highest)
-                 : (triangle.vertices(1, middle) + (triangle.vertices(1, highest) - triangle.vertices(1, middle)) *
-                                                       (real_x - triangle.vertices(0, middle)) /
-                                                       (triangle.vertices(0, highest) - triangle.vertices(0, middle))));
+            (highest(0) == middle(0)
+                 ? highest(1)
+                 : (middle(1) + (highest(1) - middle(1)) * (real_x - middle(0)) / (highest(0) - middle(0))));
         if (real_y1 > real_y2) {
             std::swap(real_y1, real_y2);
         }
@@ -117,22 +111,12 @@ void FillUpperTriangle(const Triangle& triangle, Frame& frame, std::vector<doubl
 
 void DrawTriangle(Frame& frame, std::vector<double>& z_buffer_, const Triangle& triangle) {
 
-    // Индексы вершин треугольника, отсортированные по Ox.
-    /*
-        Я не изменил это место, т.к. невозможно вернуть 3 ссылки на 3 вектора, т.к. нельзя получить ссылку на
-        вектор-столбец в матрице, потому что этого объекта нет, можно только получить новый вектор с помощью .col. В
-        таком случае можно получить их копии, но числа lowest, middle, highest нужны дальше в коде, да, можно там везде
-        вместо них начать использовать полученные вектора, может, ты на это и намекнул, просто я не совсем понял, почему
-        так лучше. Будет меньше кода, то есть triangle.vertices(0, middle) заменится на middle_vector(0) или типа того,
-        почему это действительно того стоит? И да, я поискал в Eigen что-то типа VectorView или какого-то умного
-        враппера и нашел только Eigen::IndexedView, но мне кажется это слишком, + не факт, что оно может
-        взаимодействовать с обычными векторами. Оставлю это место до ещё одного ревью или встречи.
-    */
+    // Eigen::Block'и вершин треугольника, отсортированные по Ox.
     auto [lowest, middle, highest] = GetVerticalOrderOfVertices(triangle);
 
     // Получаю векторы, напраленные из нижней (по Ox) точки треугольника в среднюю и верхнюю соотв.
-    Vector3 v1 = triangle.vertices.col(middle).head(3) - triangle.vertices.col(lowest).head(3);
-    Vector3 v2 = triangle.vertices.col(highest).head(3) - triangle.vertices.col(lowest).head(3);
+    Vector3 v1 = middle.head(3) - lowest.head(3);
+    Vector3 v2 = highest.head(3) - lowest.head(3);
     // Получаю вектр нормали к плоскости треугольника.
     v1 = v1.cross(v2);
 
@@ -149,11 +133,10 @@ void DrawTriangle(Frame& frame, std::vector<double>& z_buffer_, const Triangle& 
     double z_diff_y = real_z_diff_y * kSideOfTheCube / frame.GetWidth();
     double z_diff_x = (v1(2) == 0 ? 0 : -v1(0) / v1(2) * kSideOfTheCube / frame.GetHeight());
 
-    double real_x = (triangle.vertices(0, lowest) >= -1 ? triangle.vertices(0, lowest) : -1);
-    double prev_y = triangle.vertices(1, lowest);
+    double real_x = (lowest(0) >= -1 ? lowest(0) : -1);
+    double prev_y = lowest(1);
 
-    double real_z =
-        triangle.vertices(2, lowest) - (v1(2) == 0 ? 0 : v1(0) / v1(2)) * (real_x - triangle.vertices(0, lowest));
+    double real_z = lowest(2) - (v1(2) == 0 ? 0 : v1(0) / v1(2)) * (real_x - lowest(0));
 
     ssize_t x = frame.CalcXDiscreteFromRealSegment(real_x, kSideOfTheCube);
     assert(x >= 0);
@@ -174,9 +157,6 @@ Frame BufferRasterizer::MakeFrame(const std::vector<Triangle>& triangles, Frame&
     Frame ret(std::move(frame));
     ret.FillWithBlackColor();
     for (const auto& triangle : triangles) {
-        // Т.к. я пока что не реализовал клиппинг, логика растерайзера обрабатывает случаи, когда вершины трегольника
-        // выходят за границы видимой зоны, когда я реализую клиппинг, эту лишнюю логику можно будет убрать, ну или хотя
-        // бы упростить.
         DrawTriangle(ret, z_buffer_, triangle);
     }
     return ret;

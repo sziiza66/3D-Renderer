@@ -9,7 +9,7 @@ namespace Renderer3D::Kernel {
 class World {
 
 public:
-    void PushObject(const HomoTransform& pos, Object&& obj);
+    void PushObject(const AffineTransform& pos, Object&& obj);
 
     [[nodiscard]] const std::vector<SubObject>& GetObjects() const;
 

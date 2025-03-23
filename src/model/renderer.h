@@ -10,7 +10,7 @@ namespace Renderer3D::Kernel {
 class Renderer {
 
 public:
-    Frame RenderFrame(const std::vector<SubObject>& objects, const HomoTransform& camera_pos, const Camera& cam,
+    Frame RenderFrame(const std::vector<SubObject>& objects, const AffineTransform& camera_pos, const Camera& cam,
                       Frame&& frame);
 
 private:

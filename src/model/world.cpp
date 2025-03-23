@@ -2,7 +2,7 @@
 
 namespace Renderer3D::Kernel {
 
-void World::PushObject(const HomoTransform& pos, Object&& obj) {
+void World::PushObject(const AffineTransform& pos, Object&& obj) {
     objects_.emplace_back(pos, std::move(obj));
 }
 
