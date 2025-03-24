@@ -6,13 +6,11 @@
 
 namespace Renderer3D::Kernel {
 
-Camera::Camera(double fov, double near_dist, double far_dist, double ratio)
+Camera::Camera(double fov, double near_dist, double ratio)
     : fov_(fov), near_dist_(near_dist), ratio_(ratio) {
     assert(fov > 0);
     assert(fov < std::numbers::pi);
     assert(near_dist > 0);
-    assert(far_dist > near_dist);
-    assert(!std::isinf(far_dist));
     assert(!std::isinf(near_dist));
     assert(ratio > 0);
     assert(!std::isinf(ratio));

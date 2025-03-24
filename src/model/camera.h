@@ -7,7 +7,7 @@ namespace Renderer3D::Kernel {
 class Camera {
 
 public:
-    Camera(double fov, double near_dist, double far_dist, double ratio);
+    Camera(double fov, double near_dist, double ratio);
 
     [[nodiscard]] double GetRatio() const;
     [[nodiscard]] double GetNearDist() const;

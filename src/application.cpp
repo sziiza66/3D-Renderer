@@ -59,7 +59,7 @@ void Application::Run() {
 }
 
 Application::Camera Application::DefaultCamera() {
-    return {std::numbers::pi / 2, kNearPlaneDistance, kFarPlaneDistance, 1.0 * kScreenWidth / kScreenHeight};
+    return {std::numbers::pi / 2, kNearPlaneDistance, 1.0 * kScreenWidth / kScreenHeight};
 }
 
 void Application::HandleLeft(double alpha) {

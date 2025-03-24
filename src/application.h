@@ -38,7 +38,6 @@ private:
     static constexpr size_t kScreenWidth = 1800;
     static constexpr size_t kScreenHeight = 900;
     static constexpr double kNearPlaneDistance = 0.1;
-    static constexpr double kFarPlaneDistance = 1000;
     static constexpr double kMovementSpeedCoefficient = 0.01;
     static constexpr double kAngleCoefficient = 180;
     static const AffineTransform kRightTurn;

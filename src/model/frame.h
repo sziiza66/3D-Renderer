@@ -18,15 +18,13 @@ public:
     Frame() = default;
     Frame(FrameHeight height, FrameWidth width);
 
-    Color& operator()(ssize_t x, ssize_t y);
-    const Color& operator()(ssize_t x, ssize_t y) const;
+    Color& operator()(size_t x, size_t y);
+    const Color& operator()(size_t x, size_t y) const;
 
     void FillWithBlackColor();
     [[nodiscard]] ssize_t GetHeight() const;
     [[nodiscard]] ssize_t GetWidth() const;
     [[nodiscard]] const ColorWithAlpha* Data() const;
-    [[nodiscard]] ssize_t CalcYDiscreteFromRealSegment(double y, double segment_length) const;
-    [[nodiscard]] ssize_t CalcXDiscreteFromRealSegment(double x, double segment_length) const;
 
 private:
     static constexpr ColorWithAlpha kWhite = {0, 0, 0, ColorWithAlpha::kDefaultAlpha};

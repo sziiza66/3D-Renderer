@@ -1,17 +1,17 @@
 #include "rasterizer.h"
 
 #include <cassert>
+#include "zbuffer.h"
 
 namespace Renderer3D::Kernel {
 namespace {
 
 constexpr double kSideOfTheCube = 2.0;
 
-using VectorRef = const Eigen::Block<const Eigen::Matrix<double, 4, 3>, 4, 1, true>;
-
 auto GetVerticalOrderOfVertices(const Triangle& triangle) {
     std::array<uint8_t, 3> ret = {0, 1, 2};
 
+    // Eigen::Block не swap'ается :(
     if (triangle.vertices(0, ret[2]) < triangle.vertices(0, ret[1])) {
         std::swap(ret[2], ret[1]);
     }
@@ -22,12 +22,12 @@ auto GetVerticalOrderOfVertices(const Triangle& triangle) {
         std::swap(ret[1], ret[0]);
     }
 
-    return std::array<VectorRef, 3>{triangle.vertices.col(ret[0]), triangle.vertices.col(ret[1]),
-                                    triangle.vertices.col(ret[2])};
+    return std::array<ConstVertexRef, 3>{triangle.vertices.col(ret[0]), triangle.vertices.col(ret[1]),
+                                         triangle.vertices.col(ret[2])};
 }
 
-void FillSegment(const Triangle& triangle, Frame& frame, std::vector<double>& z_buffer_, ssize_t x, double real_y1,
-                 double real_y2, double real_z, double z_diff_y, double real_z_diff_y) {
+void FillSegment(Color col, Frame& frame, ZBuffer& z_buffer_, ssize_t x, double real_y1, double real_y2, double real_z,
+                 double z_diff_y, double real_z_diff_y) {
 
     ssize_t edge = frame.GetWidth() - 1;
     assert(edge >= 0);
@@ -37,33 +37,32 @@ void FillSegment(const Triangle& triangle, Frame& frame, std::vector<double>& z_
         real_y1 = -1;
     }
 
-    // Есть непонятка, нужно обсудить.
-    ssize_t y1 = frame.CalcYDiscreteFromRealSegment(real_y1, kSideOfTheCube);
-    ssize_t y2 = frame.CalcYDiscreteFromRealSegment(real_y2, kSideOfTheCube);
+    ssize_t y1 = frame.GetWidth() * ((real_y1 + 1) / kSideOfTheCube);
+    ssize_t y2 = frame.GetWidth() * ((real_y2 + 1) / kSideOfTheCube);
     assert(y1 >= 0);
     assert(y2 >= 0);
 
     for (ssize_t y = y1; y <= (y2 >= edge ? edge : y2); ++y, real_z += z_diff_y) {
-        if (real_z < z_buffer_[x * frame.GetWidth() + y]) {
-            z_buffer_[x * frame.GetWidth() + y] = real_z;
-            frame(x, y) = triangle.color;
+        if (real_z < z_buffer_(x, y)) {
+            z_buffer_(x, y) = real_z;
+            frame(x, y) = col;
         }
     }
 }
 
-void FillLowerTriangle(const Triangle& triangle, Frame& frame, std::vector<double>& z_buffer_, VectorRef lowest,
-                       VectorRef middle, VectorRef highest, double real_z_diff_y, double z_diff_y, double z_diff_x,
-                       double& real_x, double& real_z, ssize_t& x, double& prev_y) {
+void FillLowerTriangle(const Triangle& triangle, Frame& frame, ZBuffer& z_buffer_, ConstVertexRef lowest,
+                       ConstVertexRef middle, ConstVertexRef highest, double real_z_diff_y, double z_diff_y,
+                       double z_diff_x, double* real_x, double* real_z, ssize_t* x, double* prev_y) {
     double mid_x = (middle(0) <= 1 ? middle(0) : 1);
     double dx = kSideOfTheCube / frame.GetHeight();
-    for (; real_x < mid_x; ++x, real_x += dx, real_z += z_diff_x) {
+    for (; *real_x < mid_x; ++(*x), *real_x += dx, *real_z += z_diff_x) {
         // real_y1, real_y2 -- y координаты отрезка в видимом пространстве, который будет нарисован на экране.
-        double real_y1 = (highest(0) == lowest(0)
-                              ? highest(1)
-                              : lowest(1) + (highest(1) - lowest(1)) * (real_x - lowest(0)) / (highest(0) - lowest(0)));
+        double real_y1 = (highest(0) == lowest(0) ? highest(1)
+                                                  : lowest(1) + (highest(1) - lowest(1)) * (*real_x - lowest(0)) /
+                                                                    (highest(0) - lowest(0)));
         double real_y2 = lowest(0) == middle(0)
                              ? middle(1)
-                             : (lowest(1) + (middle(1) - lowest(1)) * (real_x - lowest(0)) / (middle(0) - lowest(0)));
+                             : (lowest(1) + (middle(1) - lowest(1)) * (*real_x - lowest(0)) / (middle(0) - lowest(0)));
 
         if (real_y1 > real_y2) {
             std::swap(real_y1, real_y2);
@@ -72,28 +71,28 @@ void FillLowerTriangle(const Triangle& triangle, Frame& frame, std::vector<doubl
             continue;
         }
 
-        real_z += real_z_diff_y * (real_y1 - prev_y);
-        prev_y = real_y1;
+        *real_z += real_z_diff_y * (real_y1 - *prev_y);
+        *prev_y = real_y1;
 
         // Рисуем этот отрезок
-        FillSegment(triangle, frame, z_buffer_, x, real_y1, real_y2, real_z, z_diff_y, real_z_diff_y);
+        FillSegment(triangle.color, frame, z_buffer_, *x, real_y1, real_y2, *real_z, z_diff_y, real_z_diff_y);
     }
 }
 
-void FillUpperTriangle(const Triangle& triangle, Frame& frame, std::vector<double>& z_buffer_, VectorRef lowest,
-                       VectorRef middle, VectorRef highest, double real_z_diff_y, double z_diff_y, double z_diff_x,
-                       double& real_x, double& real_z, ssize_t& x, double& prev_y) {
+void FillUpperTriangle(const Triangle& triangle, Frame& frame, ZBuffer& z_buffer_, ConstVertexRef lowest,
+                       ConstVertexRef middle, ConstVertexRef highest, double real_z_diff_y, double z_diff_y,
+                       double z_diff_x, double* real_x, double* real_z, ssize_t* x, double* prev_y) {
     double top_x = (highest(0) <= 1 ? highest(0) : 1);
     double dx = kSideOfTheCube / frame.GetHeight();
-    for (; real_x < top_x; ++x, real_x += dx, real_z += z_diff_x) {
+    for (; *real_x < top_x; ++(*x), *real_x += dx, *real_z += z_diff_x) {
         // real_y1, real_y2 -- y координаты отрезка в видимом пространстве, который будет нарисован на экране.
-        double real_y1 = (highest(0) == lowest(0)
-                              ? highest(1)
-                              : lowest(1) + (highest(1) - lowest(1)) * (real_x - lowest(0)) / (highest(0) - lowest(0)));
+        double real_y1 = (highest(0) == lowest(0) ? highest(1)
+                                                  : lowest(1) + (highest(1) - lowest(1)) * (*real_x - lowest(0)) /
+                                                                    (highest(0) - lowest(0)));
         double real_y2 =
             (highest(0) == middle(0)
                  ? highest(1)
-                 : (middle(1) + (highest(1) - middle(1)) * (real_x - middle(0)) / (highest(0) - middle(0))));
+                 : (middle(1) + (highest(1) - middle(1)) * (*real_x - middle(0)) / (highest(0) - middle(0))));
         if (real_y1 > real_y2) {
             std::swap(real_y1, real_y2);
         }
@@ -101,15 +100,15 @@ void FillUpperTriangle(const Triangle& triangle, Frame& frame, std::vector<doubl
             continue;
         }
 
-        real_z += real_z_diff_y * (real_y1 - prev_y);
-        prev_y = real_y1;
+        *real_z += real_z_diff_y * (real_y1 - *prev_y);
+        *prev_y = real_y1;
 
         // Рисуем этот отрезок
-        FillSegment(triangle, frame, z_buffer_, x, real_y1, real_y2, real_z, z_diff_y, real_z_diff_y);
+        FillSegment(triangle.color, frame, z_buffer_, *x, real_y1, real_y2, *real_z, z_diff_y, real_z_diff_y);
     }
 }
 
-void DrawTriangle(Frame& frame, std::vector<double>& z_buffer_, const Triangle& triangle) {
+void DrawTriangle(Frame& frame, ZBuffer& z_buffer_, const Triangle& triangle) {
 
     // Eigen::Block'и вершин треугольника, отсортированные по Ox.
     auto [lowest, middle, highest] = GetVerticalOrderOfVertices(triangle);
@@ -133,28 +132,28 @@ void DrawTriangle(Frame& frame, std::vector<double>& z_buffer_, const Triangle& 
     double z_diff_y = real_z_diff_y * kSideOfTheCube / frame.GetWidth();
     double z_diff_x = (v1(2) == 0 ? 0 : -v1(0) / v1(2) * kSideOfTheCube / frame.GetHeight());
 
+    // Я передаю эти четыре переменные по указателю как изменяемые входные данные. Я мб позже сменю это на return tuple
+    // или struct, мне нужно подумать.
     double real_x = (lowest(0) >= -1 ? lowest(0) : -1);
     double prev_y = lowest(1);
-
     double real_z = lowest(2) - (v1(2) == 0 ? 0 : v1(0) / v1(2)) * (real_x - lowest(0));
-
-    ssize_t x = frame.CalcXDiscreteFromRealSegment(real_x, kSideOfTheCube);
+    ssize_t x = frame.GetHeight() * ((real_x + 1) / kSideOfTheCube);
     assert(x >= 0);
 
     // Треугольник разбивается на два других с одной из сторон параллельной Oy. Далее отриссовываем эти треугольники на
     // экране соотв. функциями.
-    FillLowerTriangle(triangle, frame, z_buffer_, lowest, middle, highest, real_z_diff_y, z_diff_y, z_diff_x, real_x,
-                      real_z, x, prev_y);
+    FillLowerTriangle(triangle, frame, z_buffer_, lowest, middle, highest, real_z_diff_y, z_diff_y, z_diff_x, &real_x,
+                      &real_z, &x, &prev_y);
 
-    FillUpperTriangle(triangle, frame, z_buffer_, lowest, middle, highest, real_z_diff_y, z_diff_y, z_diff_x, real_x,
-                      real_z, x, prev_y);
+    FillUpperTriangle(triangle, frame, z_buffer_, lowest, middle, highest, real_z_diff_y, z_diff_y, z_diff_x, &real_x,
+                      &real_z, &x, &prev_y);
 }
 
 }  // namespace
 
 Frame BufferRasterizer::MakeFrame(const std::vector<Triangle>& triangles, Frame&& frame) {
-    z_buffer_.assign(frame.GetHeight() * frame.GetWidth(), std::numeric_limits<double>::infinity());
     Frame ret(std::move(frame));
+    z_buffer_.FitTo(ret);
     ret.FillWithBlackColor();
     for (const auto& triangle : triangles) {
         DrawTriangle(ret, z_buffer_, triangle);

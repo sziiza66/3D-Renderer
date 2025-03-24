@@ -12,6 +12,8 @@ using Vector3 = Eigen::Vector3d;
 // там возникают проблемы интеграции, которые я не смог сходу решить.
 using TriMatrix = Eigen::Matrix<double, 4, 3>;
 using AffineTransform = Eigen::Transform<double, 3, Eigen::Affine>;
+using ConstVertexRef = Eigen::Block<const Eigen::Matrix<double, 4, 3>, 4, 1, true>;
+using VertexRef = Eigen::Block<Eigen::Matrix<double, 4, 3>, 4, 1, true>;
 
 enum FrameWidth : ssize_t;
 enum FrameHeight : ssize_t;
