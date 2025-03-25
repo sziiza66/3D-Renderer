@@ -2,21 +2,22 @@
 
 #include "model/triangle.h"
 #include "model/world.h"
-#include "model/camera.h"
+#include "model/spectator.h"
 #include "view/screen.h"
 #include "model/renderer.h"
 
 namespace Renderer3D {
 
 class Application {
-    using Triangle = Kernel::Triangle;
-    using World = Kernel::World;
     using Camera = Kernel::Camera;
-    using Renderer = Kernel::Renderer;
-    using Object = Kernel::Object;
     using Color = Kernel::Color;
-    using Screen = GUI::Screen;
     using Frame = Kernel::Frame;
+    using Triangle = Kernel::Triangle;
+    using Object = Kernel::Object;
+    using Renderer = Kernel::Renderer;
+    using Screen = GUI::Screen;
+    using Spectator = Kernel::Spectator;
+    using World = Kernel::World;
 
 public:
     Application();
@@ -24,31 +25,23 @@ public:
     void Run();
 
 private:
-    static Camera DefaultCamera();
-
     void HandleUp();
     void HandleDown();
-    void HandleLeft(double);
-    void HandleRight(double);
-    void HandleForward(double);
-    void HandleBackward(double);
-    void HandleTurnRight(double&);
-    void HandleTurnLeft(double&);
+    void HandleLeft();
+    void HandleRight();
+    void HandleForward();
+    void HandleBackward();
+    void HandleTurnRight();
+    void HandleTurnLeft();
     void UpdateFrame();
 
 private:
     static constexpr size_t kScreenWidth = 1800;
     static constexpr size_t kScreenHeight = 900;
-    static constexpr double kNearPlaneDistance = 0.1;
-    static constexpr double kMovementSpeedCoefficient = 0.01;
-    static constexpr double kAngleCoefficient = 180;
-    static const AffineTransform kRightTurn;
-    static const AffineTransform kLeftTurn;
 
 private:
     World world_;
-    Camera camera_;
-    AffineTransform camera_pos_;
+    Spectator spectator_;
     Renderer renderer_;
     Screen screen_;
     Frame frame_;

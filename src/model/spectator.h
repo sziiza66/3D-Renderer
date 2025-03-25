@@ -14,7 +14,7 @@ public:
     // типичной ситуации, оно должно соответствовать отношению сторон какого-то окна, а придав этой переменной значение
     // по умолчанию, мы типичную ситуацию делаем нетипичной.
     Spectator() = delete;
-    Spectator(double ratio);
+    explicit Spectator(double ratio);
 
     // Я ставлю пометку [[nodiscard]] в местах, где среда подсказывает мне это сделать, я думал, я правильно понял, в
     // чём смысл этой пометки, но вопреки моим ожиданиям, эту функцию среда не посоветовала обозначить [[nodiscard]],
@@ -22,6 +22,7 @@ public:
     // но это не так, я поставлю [[nodiscard]].
     [[nodiscard]] class Camera& Camera();
     [[nodiscard]] const class Camera& Camera() const;
+    [[nodiscard]] const AffineTransform& Position() const;
 
     void TurnLeft();
     void TurnRight();
@@ -33,8 +34,6 @@ public:
     void MoveDown();
 
 private:
-    static constexpr double kDefaultFov = std::numbers::pi / 2;
-    static constexpr double kDefaultNearPlaneDistance = 0.1;
     static constexpr double kDefaultMovementSpeed = 0.01;
     static constexpr double kDefaultAngularSpeed = std::numbers::pi / 180;
     static constexpr double kDefaultPolarAngle = 0;

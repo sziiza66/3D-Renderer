@@ -1,7 +1,6 @@
 #include "camera.h"
 
 #include <cassert>
-#include <cmath>
 #include <numbers>
 
 namespace Renderer3D::Kernel {
@@ -35,19 +34,26 @@ Matrix4 CalculateFrustumMatrix(double fov, double near_dist, double ratio) {
 
 }  // namespace
 
+Camera::Camera(double ratio)
+    : frustum_matrix_(CalculateFrustumMatrix(kDefaultFov, kDefaultNearPlaneDistance, ratio)),
+      fov_(kDefaultFov),
+      near_dist_(kDefaultNearPlaneDistance),
+      ratio_(ratio) {
+}
+
 Camera::Camera(double fov, double near_dist, double ratio)
     : frustum_matrix_(CalculateFrustumMatrix(fov, near_dist, ratio)), fov_(fov), near_dist_(near_dist), ratio_(ratio) {
 }
 
-double Camera::GetRatio() const {
+double Camera::Ratio() const {
     return ratio_;
 }
 
-double Camera::GetNearDist() const {
+double Camera::NearDistance() const {
     return near_dist_;
 }
 
-const Matrix4& Camera::GetFrustumMatrix() const {
+const Matrix4& Camera::FrustumMatrix() const {
     return frustum_matrix_;
 }
 

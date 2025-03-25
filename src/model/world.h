@@ -11,7 +11,7 @@ class World {
 public:
     void PushObject(const AffineTransform& pos, Object&& obj);
 
-    [[nodiscard]] const std::vector<SubObject>& GetObjects() const;
+    [[nodiscard]] const std::vector<SubObject>& Objects() const;
 
 private:
     std::vector<SubObject> objects_;

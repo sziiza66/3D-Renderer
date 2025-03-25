@@ -3,8 +3,7 @@
 namespace Renderer3D {
 
 Application::Application()
-    : camera_(DefaultCamera()),
-      camera_pos_(AffineTransform::Identity()),
+    : spectator_(kScreenWidth * 1.0 / kScreenHeight),
       screen_(ScreenHeight{kScreenHeight}, ScreenWidth{kScreenWidth}),
       frame_(Frame::Height{kScreenHeight}, Frame::Width{kScreenWidth}) {
     // Магические числа, да, потом буду мир в файле хранить, а тут читать.
@@ -21,8 +20,6 @@ Application::Application()
 }
 
 void Application::Run() {
-    // Угол поворота камеры, нужен, чтобы правильно обрабатывать движение вперед/назад/влево/вправо.
-    double alpha = 0;
 
     while (screen_.IsWindowOpen()) {
         sf::Event event{};
@@ -43,75 +40,62 @@ void Application::Run() {
             HandleDown();
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-            HandleLeft(alpha);
+            HandleLeft();
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-            HandleRight(alpha);
+            HandleRight();
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-            HandleForward(alpha);
+            HandleForward();
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-            HandleBackward(alpha);
+            HandleBackward();
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::E)) {
-            HandleTurnRight(alpha);
+            HandleTurnRight();
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
-            HandleTurnLeft(alpha);
+            HandleTurnLeft();
         }
         UpdateFrame();
     }
 }
 
-Application::Camera Application::DefaultCamera() {
-    return {std::numbers::pi / 2, kNearPlaneDistance, 1.0 * kScreenWidth / kScreenHeight};
-}
-
 void Application::HandleUp() {
-    camera_pos_(0, 3) += kMovementSpeedCoefficient;
+    spectator_.MoveUp();
 }
 
 void Application::HandleDown() {
-    camera_pos_(0, 3) -= kMovementSpeedCoefficient;
+    spectator_.MoveDown();
 }
 
-void Application::HandleLeft(double alpha) {
-    camera_pos_(2, 3) += kMovementSpeedCoefficient * sin(alpha);
-    camera_pos_(1, 3) += kMovementSpeedCoefficient * cos(alpha);
+void Application::HandleLeft() {
+    spectator_.MoveLeft();
 }
 
-void Application::HandleRight(double alpha) {
-    camera_pos_(2, 3) -= kMovementSpeedCoefficient * sin(alpha);
-    camera_pos_(1, 3) -= kMovementSpeedCoefficient * cos(alpha);
+void Application::HandleRight() {
+    spectator_.MoveRight();
 }
 
-void Application::HandleForward(double alpha) {
-    camera_pos_(1, 3) -= kMovementSpeedCoefficient * sin(alpha);
-    camera_pos_(2, 3) += kMovementSpeedCoefficient * cos(alpha);
+void Application::HandleForward() {
+    spectator_.MoveForward();
 }
 
-void Application::HandleBackward(double alpha) {
-    camera_pos_(1, 3) += kMovementSpeedCoefficient * sin(alpha);
-    camera_pos_(2, 3) -= kMovementSpeedCoefficient * cos(alpha);
+void Application::HandleBackward() {
+    spectator_.MoveBackward();
 }
 
-void Application::HandleTurnRight(double& alpha) {
-    camera_pos_ = camera_pos_ * kRightTurn;
-    alpha += std::numbers::pi / kAngleCoefficient;
+void Application::HandleTurnRight() {
+    spectator_.TurnRight();
 }
 
-void Application::HandleTurnLeft(double& alpha) {
-    camera_pos_ = camera_pos_ * kLeftTurn;
-    alpha -= std::numbers::pi / kAngleCoefficient;
+void Application::HandleTurnLeft() {
+    spectator_.TurnLeft();
 }
 
 void Application::UpdateFrame() {
-    frame_ = renderer_.RenderFrame(world_.GetObjects(), camera_pos_, camera_, std::move(frame_));
+    frame_ = renderer_.RenderFrame(world_.Objects(), spectator_.Position(), spectator_.Camera(), std::move(frame_));
     screen_.Display(frame_);
 }
-
-const AffineTransform Application::kRightTurn{Eigen::AngleAxisd(std::numbers::pi / kAngleCoefficient, Vector3::UnitX())};
-const AffineTransform Application::kLeftTurn{kRightTurn.inverse()};
 
 }  // namespace Renderer3D

@@ -3,7 +3,7 @@
 namespace Renderer3D::Kernel {
 
 Spectator::Spectator(double ratio)
-    : camera_(kDefaultFov, kDefaultNearPlaneDistance, ratio),
+    : camera_(ratio),
       position_(AffineTransform::Identity()),
       left_rotation_(Eigen::AngleAxisd(-kDefaultAngularSpeed, Vector3::UnitX())),
       right_rotation_(Eigen::AngleAxisd(kDefaultAngularSpeed, Vector3::UnitX())),
@@ -19,13 +19,17 @@ const class Camera& Spectator::Camera() const {
     return camera_;
 }
 
+const AffineTransform& Spectator::Position() const {
+    return position_;
+}
+
 void Spectator::TurnLeft() {
-    position_ = left_rotation_ * position_;
+    position_ = position_ * left_rotation_;
     x_axis_polar_angle_ -= angular_speed_;
 }
 
 void Spectator::TurnRight() {
-    position_ = right_rotation_ * position_;
+    position_ = position_ * right_rotation_;
     x_axis_polar_angle_ += angular_speed_;
 }
 

@@ -6,7 +6,7 @@ void World::PushObject(const AffineTransform& pos, Object&& obj) {
     objects_.emplace_back(pos, std::move(obj));
 }
 
-const std::vector<SubObject>& World::GetObjects() const {
+const std::vector<SubObject>& World::Objects() const {
     return objects_;
 }
 

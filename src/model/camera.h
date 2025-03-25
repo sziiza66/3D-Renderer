@@ -7,13 +7,18 @@ namespace Renderer3D::Kernel {
 class Camera {
 
 public:
-    Camera();
-
+    // Удаление дефолтного конструкторо мотивировано тем же, что и в случае class Spectator, см. комментарии там.
+    Camera() = delete;
+    explicit Camera(double ratio);
     Camera(double fov, double near_dist, double ratio);
 
-    [[nodiscard]] double GetRatio() const;
-    [[nodiscard]] double GetNearDist() const;
-    [[nodiscard]] const Matrix4& GetFrustumMatrix() const;
+    [[nodiscard]] double Ratio() const;
+    [[nodiscard]] double NearDistance() const;
+    [[nodiscard]] const Matrix4& FrustumMatrix() const;
+
+private:
+    static constexpr double kDefaultFov = std::numbers::pi / 2;
+    static constexpr double kDefaultNearPlaneDistance = 0.1;
 
 private:
     Matrix4 frustum_matrix_;

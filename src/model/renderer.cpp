@@ -9,7 +9,7 @@ namespace {
 
 void ApplyFrustumTransformationOnTriangle(const Camera& cam, Triangle* triangle) {
     assert(triangle);
-    triangle->vertices = cam.GetFrustumMatrix() * triangle->vertices;
+    triangle->vertices = cam.FrustumMatrix() * triangle->vertices;
     for (uint8_t j = 0; j < 3; ++j) {
         for (uint8_t i = 0; i < 3; ++i) {
             triangle->vertices(j, i) /= triangle->vertices(3, i);
@@ -154,6 +154,7 @@ Frame Renderer::RenderFrame(const std::vector<SubObject>& objects, const AffineT
     // будут прибиты гвоздями к своему месту в мире. В данный момент мир -- это контейнер SubObject'ов, т.е. объектов с
     // их положением в пространстве, наиболее разумный вариант.
     FetchTriangles(objects, &triangle_buffer_);
+    // Теперь тут обращается матрица аффинного преобразвания, а не просто Matrix4, скорее всего Eigen это оптимизирует.
     AffineTransform transformation_to_camera_space = camera_pos.inverse();
 
     for (Triangle& triangle : triangle_buffer_) {
@@ -161,7 +162,7 @@ Frame Renderer::RenderFrame(const std::vector<SubObject>& objects, const AffineT
     }
 
     // Clipping
-    triangle_buffer_ = ClipAgainstZAxis(camera.GetNearDist(), std::move(triangle_buffer_));
+    triangle_buffer_ = ClipAgainstZAxis(camera.NearDistance(), std::move(triangle_buffer_));
 
     for (Triangle& triangle : triangle_buffer_) {
         ApplyFrustumTransformationOnTriangle(camera, &triangle);
