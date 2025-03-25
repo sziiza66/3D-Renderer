@@ -10,7 +10,7 @@ ssize_t MakeAtLeastOne(ssize_t sz) {
 
 } // namespace
 
-Frame::Frame(FrameHeight height, FrameWidth width)
+Frame::Frame(Height height, Width width)
     : data_(MakeAtLeastOne(height) * MakeAtLeastOne(width)), width_(MakeAtLeastOne(width)) {
 }
 
@@ -26,11 +26,11 @@ void Frame::FillWithBlackColor() {
     data_.assign(data_.size(), kWhite);
 }
 
-ssize_t Frame::GetHeight() const {
+size_t Frame::GetHeight() const {
     return data_.size() / (width_ == 0 ? 1 : width_);
 }
 
-ssize_t Frame::GetWidth() const {
+size_t Frame::GetWidth() const {
     return width_;
 }
 

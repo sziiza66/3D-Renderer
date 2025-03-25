@@ -6,7 +6,7 @@ Application::Application()
     : camera_(DefaultCamera()),
       camera_pos_(AffineTransform::Identity()),
       screen_(ScreenHeight{kScreenHeight}, ScreenWidth{kScreenWidth}),
-      frame_(FrameHeight{kScreenHeight}, FrameWidth{kScreenWidth}) {
+      frame_(Frame::Height{kScreenHeight}, Frame::Width{kScreenWidth}) {
     // Магические числа, да, потом буду мир в файле хранить, а тут читать.
     Object obj;
     Triangle t1(TriMatrix{{0, 0.5, -0.5}, {0, 0.5, 0.5}, {0, 0.5, -0.5}, {1, 1, 1}}, Color{255, 0, 0});
@@ -36,6 +36,12 @@ void Application::Run() {
             }
         }
 
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z)) {
+            HandleUp();
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::X)) {
+            HandleDown();
+        }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
             HandleLeft(alpha);
         }
@@ -60,6 +66,14 @@ void Application::Run() {
 
 Application::Camera Application::DefaultCamera() {
     return {std::numbers::pi / 2, kNearPlaneDistance, 1.0 * kScreenWidth / kScreenHeight};
+}
+
+void Application::HandleUp() {
+    camera_pos_(0, 3) += kMovementSpeedCoefficient;
+}
+
+void Application::HandleDown() {
+    camera_pos_(0, 3) -= kMovementSpeedCoefficient;
 }
 
 void Application::HandleLeft(double alpha) {

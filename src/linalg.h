@@ -15,8 +15,6 @@ using AffineTransform = Eigen::Transform<double, 3, Eigen::Affine>;
 using ConstVertexRef = Eigen::Block<const Eigen::Matrix<double, 4, 3>, 4, 1, true>;
 using VertexRef = Eigen::Block<Eigen::Matrix<double, 4, 3>, 4, 1, true>;
 
-enum FrameWidth : ssize_t;
-enum FrameHeight : ssize_t;
 enum ScreenHeight : unsigned int;
 enum ScreenWidth : unsigned int;
 

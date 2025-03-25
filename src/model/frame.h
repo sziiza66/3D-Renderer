@@ -1,7 +1,7 @@
 #pragma once
 
 #include "color.h"
-#include "../aliases.h"
+#include "../linalg.h"
 
 namespace Renderer3D::Kernel {
 
@@ -15,15 +15,18 @@ class Frame {
     };
 
 public:
+    enum Width : ssize_t;
+    enum Height : ssize_t;
+
     Frame() = default;
-    Frame(FrameHeight height, FrameWidth width);
+    Frame(Height height, Width width);
 
     Color& operator()(size_t x, size_t y);
     const Color& operator()(size_t x, size_t y) const;
 
     void FillWithBlackColor();
-    [[nodiscard]] ssize_t GetHeight() const;
-    [[nodiscard]] ssize_t GetWidth() const;
+    [[nodiscard]] size_t GetHeight() const;
+    [[nodiscard]] size_t GetWidth() const;
     [[nodiscard]] const ColorWithAlpha* Data() const;
 
 private:

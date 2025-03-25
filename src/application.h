@@ -26,6 +26,8 @@ public:
 private:
     static Camera DefaultCamera();
 
+    void HandleUp();
+    void HandleDown();
     void HandleLeft(double);
     void HandleRight(double);
     void HandleForward(double);

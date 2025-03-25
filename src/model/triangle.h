@@ -1,7 +1,7 @@
 #pragma once
 
 #include "color.h"
-#include "../aliases.h"
+#include "../linalg.h"
 
 namespace Renderer3D::Kernel {
 

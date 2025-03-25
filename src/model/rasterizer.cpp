@@ -26,10 +26,10 @@ auto GetVerticalOrderOfVertices(const Triangle& triangle) {
                                          triangle.vertices.col(ret[2])};
 }
 
-void FillSegment(Color col, Frame& frame, ZBuffer& z_buffer_, ssize_t x, double real_y1, double real_y2, double real_z,
+void FillSegment(Color col, Frame& frame, ZBuffer& z_buffer_, size_t x, double real_y1, double real_y2, double real_z,
                  double z_diff_y, double real_z_diff_y) {
 
-    ssize_t edge = frame.GetWidth() - 1;
+    size_t edge = frame.GetWidth() - 1;
     assert(edge >= 0);
 
     if (real_y1 < -1) {
@@ -37,12 +37,10 @@ void FillSegment(Color col, Frame& frame, ZBuffer& z_buffer_, ssize_t x, double 
         real_y1 = -1;
     }
 
-    ssize_t y1 = frame.GetWidth() * ((real_y1 + 1) / kSideOfTheCube);
-    ssize_t y2 = frame.GetWidth() * ((real_y2 + 1) / kSideOfTheCube);
-    assert(y1 >= 0);
-    assert(y2 >= 0);
+    size_t y1 = ((real_y1 + 1) / kSideOfTheCube) * frame.GetWidth();
+    size_t y2 = ((real_y2 + 1) / kSideOfTheCube) * frame.GetWidth();
 
-    for (ssize_t y = y1; y <= (y2 >= edge ? edge : y2); ++y, real_z += z_diff_y) {
+    for (size_t y = y1; y <= (y2 >= edge ? edge : y2); ++y, real_z += z_diff_y) {
         if (real_z < z_buffer_(x, y)) {
             z_buffer_(x, y) = real_z;
             frame(x, y) = col;
@@ -52,7 +50,7 @@ void FillSegment(Color col, Frame& frame, ZBuffer& z_buffer_, ssize_t x, double 
 
 void FillLowerTriangle(const Triangle& triangle, Frame& frame, ZBuffer& z_buffer_, ConstVertexRef lowest,
                        ConstVertexRef middle, ConstVertexRef highest, double real_z_diff_y, double z_diff_y,
-                       double z_diff_x, double* real_x, double* real_z, ssize_t* x, double* prev_y) {
+                       double z_diff_x, double* real_x, double* real_z, size_t* x, double* prev_y) {
     double mid_x = (middle(0) <= 1 ? middle(0) : 1);
     double dx = kSideOfTheCube / frame.GetHeight();
     for (; *real_x < mid_x; ++(*x), *real_x += dx, *real_z += z_diff_x) {
@@ -81,7 +79,7 @@ void FillLowerTriangle(const Triangle& triangle, Frame& frame, ZBuffer& z_buffer
 
 void FillUpperTriangle(const Triangle& triangle, Frame& frame, ZBuffer& z_buffer_, ConstVertexRef lowest,
                        ConstVertexRef middle, ConstVertexRef highest, double real_z_diff_y, double z_diff_y,
-                       double z_diff_x, double* real_x, double* real_z, ssize_t* x, double* prev_y) {
+                       double z_diff_x, double* real_x, double* real_z, size_t* x, double* prev_y) {
     double top_x = (highest(0) <= 1 ? highest(0) : 1);
     double dx = kSideOfTheCube / frame.GetHeight();
     for (; *real_x < top_x; ++(*x), *real_x += dx, *real_z += z_diff_x) {
@@ -113,6 +111,11 @@ void DrawTriangle(Frame& frame, ZBuffer& z_buffer_, const Triangle& triangle) {
     // Eigen::Block'и вершин треугольника, отсортированные по Ox.
     auto [lowest, middle, highest] = GetVerticalOrderOfVertices(triangle);
 
+    /*
+        Вроде это единственное место, где я кнвертирую Vector4 -> Vector3 или наоборот, если реально стоит выделить
+        конвертацию в функцию, то без проблем. В любом случае я сделаю read/write сцены в файл, а в файле я буду хранить
+        матрицы компактно, так что наверное что-то такое понадобится.
+    */
     // Получаю векторы, напраленные из нижней (по Ox) точки треугольника в среднюю и верхнюю соотв.
     Vector3 v1 = middle.head(3) - lowest.head(3);
     Vector3 v2 = highest.head(3) - lowest.head(3);
@@ -137,8 +140,8 @@ void DrawTriangle(Frame& frame, ZBuffer& z_buffer_, const Triangle& triangle) {
     double real_x = (lowest(0) >= -1 ? lowest(0) : -1);
     double prev_y = lowest(1);
     double real_z = lowest(2) - (v1(2) == 0 ? 0 : v1(0) / v1(2)) * (real_x - lowest(0));
-    ssize_t x = frame.GetHeight() * ((real_x + 1) / kSideOfTheCube);
-    assert(x >= 0);
+    size_t x = frame.GetHeight() * ((real_x + 1) / kSideOfTheCube);
+    x = (x >= frame.GetHeight() ? frame.GetHeight() - 1 : x);
 
     // Треугольник разбивается на два других с одной из сторон параллельной Oy. Далее отриссовываем эти треугольники на
     // экране соотв. функциями.
