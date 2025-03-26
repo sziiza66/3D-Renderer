@@ -28,19 +28,18 @@ auto GetVerticalOrderOfVertices(const Triangle& triangle) {
 
 void FillSegment(Color col, size_t x, double real_y1, double real_y2, double real_z, double z_diff_y,
                  double real_z_diff_y, Frame* frame, ZBuffer* z_buffer_) {
-
-    size_t edge = frame->GetWidth() - 1;
-    assert(edge >= 0);
-
     if (real_y1 < -1) {
         real_z += (-real_y1 - 1) * real_z_diff_y;
         real_y1 = -1;
     }
 
     size_t y1 = ((real_y1 + 1) / kSideOfTheCube) * frame->GetWidth();
-    size_t y2 = ((real_y2 + 1) / kSideOfTheCube) * frame->GetWidth();
+    size_t y2 = ((real_y2 + 1) / kSideOfTheCube) * frame->GetWidth() + 1;
+    assert(y1 < y2);
 
-    for (size_t y = y1; y <= (y2 >= edge ? edge : y2); ++y, real_z += z_diff_y) {
+    size_t edge = (y2 >= frame->GetWidth() ? frame->GetWidth() : y2);
+
+    for (size_t y = y1; y != (y2 >= edge ? edge : y2); ++y, real_z += z_diff_y) {
         if (real_z < (*z_buffer_)(x, y)) {
             (*z_buffer_)(x, y) = real_z;
             (*frame)(x, y) = col;
@@ -55,17 +54,17 @@ void FillLowerTriangle(const Triangle& triangle, ConstVertexRef lowest, ConstVer
     double dx = kSideOfTheCube / frame->GetHeight();
     for (; *real_x < mid_x; ++(*x), *real_x += dx, *real_z += z_diff_x) {
         // real_y1, real_y2 -- y координаты отрезка в видимом пространстве, который будет нарисован на экране.
-        double real_y1 = (highest(0) == lowest(0) ? highest(1)
-                                                  : lowest(1) + (highest(1) - lowest(1)) * (*real_x - lowest(0)) /
-                                                                    (highest(0) - lowest(0)));
+        double real_y1 = highest(0) == lowest(0)
+                             ? highest(1)
+                             : lowest(1) + (highest(1) - lowest(1)) * (*real_x - lowest(0)) / (highest(0) - lowest(0));
         double real_y2 = lowest(0) == middle(0)
                              ? middle(1)
-                             : (lowest(1) + (middle(1) - lowest(1)) * (*real_x - lowest(0)) / (middle(0) - lowest(0)));
-
+                             : lowest(1) + (middle(1) - lowest(1)) * (*real_x - lowest(0)) / (middle(0) - lowest(0));
         if (real_y1 > real_y2) {
             std::swap(real_y1, real_y2);
         }
-        if (real_y2 < -1) {
+
+        if (real_y2 < -1 || real_y1 > 1) {
             continue;
         }
 
@@ -84,17 +83,17 @@ void FillUpperTriangle(const Triangle& triangle, ConstVertexRef lowest, ConstVer
     double dx = kSideOfTheCube / frame->GetHeight();
     for (; *real_x < top_x; ++(*x), *real_x += dx, *real_z += z_diff_x) {
         // real_y1, real_y2 -- y координаты отрезка в видимом пространстве, который будет нарисован на экране.
-        double real_y1 = (highest(0) == lowest(0) ? highest(1)
-                                                  : lowest(1) + (highest(1) - lowest(1)) * (*real_x - lowest(0)) /
-                                                                    (highest(0) - lowest(0)));
-        double real_y2 =
-            (highest(0) == middle(0)
-                 ? highest(1)
-                 : (middle(1) + (highest(1) - middle(1)) * (*real_x - middle(0)) / (highest(0) - middle(0))));
+        double real_y1 = highest(0) == lowest(0)
+                             ? highest(1)
+                             : lowest(1) + (highest(1) - lowest(1)) * (*real_x - lowest(0)) / (highest(0) - lowest(0));
+        double real_y2 = highest(0) == middle(0)
+                             ? highest(1)
+                             : middle(1) + (highest(1) - middle(1)) * (*real_x - middle(0)) / (highest(0) - middle(0));
         if (real_y1 > real_y2) {
             std::swap(real_y1, real_y2);
         }
-        if (real_y2 < -1) {
+
+        if (real_y2 < -1 || real_y1 > 1) {
             continue;
         }
 
@@ -112,7 +111,7 @@ void DrawTriangle(const Triangle& triangle, Frame* frame, ZBuffer* z_buffer_) {
     auto [lowest, middle, highest] = GetVerticalOrderOfVertices(triangle);
 
     /*
-        Вроде это единственное место, где я кнвертирую Vector4 -> Vector3 или наоборот, если реально стоит выделить
+        Вроде это единственное место, где я конвертирую Vector4 -> Vector3 или наоборот, если реально стоит выделить
         конвертацию в функцию, то без проблем. В любом случае я сделаю read/write сцены в файл, а в файле я буду хранить
         матрицы компактно, так что наверное что-то такое понадобится.
     */

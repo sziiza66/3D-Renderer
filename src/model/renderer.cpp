@@ -167,10 +167,6 @@ Frame Renderer::RenderFrame(const std::vector<SubObject>& objects, const AffineT
         ApplyFrustumTransformationOnTriangle(camera, &triangle);
     }
 
-    // for (auto& tri : triangle_buffer_) {
-    //     std::cout << tri.vertices << "\n\n";
-    // }
-
     return rasterizer_.MakeFrame(triangle_buffer_, std::move(frame));
 }
 
