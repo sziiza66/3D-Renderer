@@ -33,36 +33,36 @@ void Application::Run() {
     }
 }
 
-void Application::HandleUp() {
-    spectator_.MoveUp();
+void Application::HandleUp(Spectator* spectator) {
+    spectator->MoveUp();
 }
 
-void Application::HandleDown() {
-    spectator_.MoveDown();
+void Application::HandleDown(Spectator* spectator) {
+    spectator->MoveDown();
 }
 
-void Application::HandleLeft() {
-    spectator_.MoveLeft();
+void Application::HandleLeft(Spectator* spectator) {
+    spectator->MoveLeft();
 }
 
-void Application::HandleRight() {
-    spectator_.MoveRight();
+void Application::HandleRight(Spectator* spectator) {
+    spectator->MoveRight();
 }
 
-void Application::HandleForward() {
-    spectator_.MoveForward();
+void Application::HandleForward(Spectator* spectator) {
+    spectator->MoveForward();
 }
 
-void Application::HandleBackward() {
-    spectator_.MoveBackward();
+void Application::HandleBackward(Spectator* spectator) {
+    spectator->MoveBackward();
 }
 
-void Application::HandleTurnRight() {
-    spectator_.TurnRight();
+void Application::HandleTurnRight(Spectator* spectator) {
+    spectator->TurnRight();
 }
 
-void Application::HandleTurnLeft() {
-    spectator_.TurnLeft();
+void Application::HandleTurnLeft(Spectator* spectator) {
+    spectator->TurnLeft();
 }
 
 void Application::DrawFrame(const Frame& frame, const sf::Sprite& sprite, sf::Texture* texture) {
@@ -93,29 +93,11 @@ void Application::HandleLoopIteration(const sf::Sprite& sprite, sf::Texture* tex
         }
     }
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z)) {
-        HandleUp();
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::X)) {
-        HandleDown();
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-        HandleLeft();
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-        HandleRight();
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-        HandleForward();
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-        HandleBackward();
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::E)) {
-        HandleTurnRight();
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
-        HandleTurnLeft();
+    // Вся обработка клавиш сжимается в эти 4 строки, думаю, неплохо, и не должно влиять на производительность.
+    for (const auto& association : UsedKeysMapping) {
+        if (sf::Keyboard::isKeyPressed(association.key)) {
+            association.handler(&spectator_);
+        }
     }
 
     frame_ = renderer_.RenderFrame(world_.Objects(), spectator_.Position(), spectator_.Camera(), std::move(frame_));
