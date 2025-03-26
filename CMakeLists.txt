@@ -23,8 +23,8 @@ SET(SOURCES
     src/model/world.cpp
     src/model/frame.cpp
     src/model/zbuffer.cpp
+    src/model/spectator.cpp
     src/application.cpp
-    src/view/screen.cpp
     src/utility/except.cpp)
 
 add_executable(main ${SOURCES})
