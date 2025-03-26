@@ -6,8 +6,8 @@ void Object::PushTriangle(Triangle triangle) {
     triangles_.emplace_back(std::move(triangle));
 }
 
-void Object::PushSubObject(AffineTransform pos, Object obj) {
-    subobjects_.emplace_back(std::move(pos), std::move(obj));
+void Object::PushSubObject(const AffineTransform& pos, Object&& obj) {
+    subobjects_.emplace_back(pos, std::move(obj));
 }
 
 const std::vector<Triangle>& Object::GetTriangles() const {

@@ -10,7 +10,7 @@ class Object {
 
 public:
     void PushTriangle(Triangle triangle);
-    void PushSubObject(AffineTransform pos, Object obj);
+    void PushSubObject(const AffineTransform& pos, Object&& obj);
 
     [[nodiscard]] const std::vector<Triangle>& GetTriangles() const;
     [[nodiscard]] const std::vector<SubObject>& GetSubobjects() const;

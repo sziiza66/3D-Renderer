@@ -5,18 +5,8 @@ namespace Renderer3D {
 Application::Application()
     : spectator_(kDefaultWindowWidth * 1.0 / kDefaultWindowHeight),
       frame_(Frame::Height{kDefaultWindowHeight}, Frame::Width{kDefaultWindowWidth}),
-      window_(sf::VideoMode(kDefaultWindowWidth, kDefaultWindowHeight), kWindowName) {
-    // Магические числа, да, потом буду мир в файле хранить, а тут читать.
-    Object obj;
-    Triangle t1(TriMatrix{{0, 0.5, -0.5}, {0, 0.5, 0.5}, {0, 0.5, -0.5}, {1, 1, 1}}, Color{255, 0, 0});
-    Triangle t2(TriMatrix{{0, 1, 0}, {0, 0, 1}, {0, 0, 0}, {1, 1, 1}}, Color{0, 255, 0});
-    Triangle t3(TriMatrix{{0.4, 0.5, 0}, {1, -1, 0}, {1, 0.5, -4}, {1, 1, 1}}, Color{0, 0, 255});
-
-    obj.PushTriangle(t1);
-    obj.PushTriangle(t2);
-    obj.PushTriangle(t3);
-    AffineTransform pos = AffineTransform::Identity();
-    world_.PushObject(pos, std::move(obj));
+      window_(sf::VideoMode(kDefaultWindowWidth, kDefaultWindowHeight), kWindowName),
+      world_(PopulateWorld()) {
 }
 
 void Application::Run() {
@@ -31,38 +21,6 @@ void Application::Run() {
     while (window_.isOpen()) {
         HandleLoopIteration(sprite, &texture);
     }
-}
-
-void Application::HandleUp(Spectator* spectator) {
-    spectator->MoveUp();
-}
-
-void Application::HandleDown(Spectator* spectator) {
-    spectator->MoveDown();
-}
-
-void Application::HandleLeft(Spectator* spectator) {
-    spectator->MoveLeft();
-}
-
-void Application::HandleRight(Spectator* spectator) {
-    spectator->MoveRight();
-}
-
-void Application::HandleForward(Spectator* spectator) {
-    spectator->MoveForward();
-}
-
-void Application::HandleBackward(Spectator* spectator) {
-    spectator->MoveBackward();
-}
-
-void Application::HandleTurnRight(Spectator* spectator) {
-    spectator->TurnRight();
-}
-
-void Application::HandleTurnLeft(Spectator* spectator) {
-    spectator->TurnLeft();
 }
 
 void Application::DrawFrame(const Frame& frame, const sf::Sprite& sprite, sf::Texture* texture) {
@@ -102,6 +60,53 @@ void Application::HandleLoopIteration(const sf::Sprite& sprite, sf::Texture* tex
 
     frame_ = renderer_.RenderFrame(world_.Objects(), spectator_.Position(), spectator_.Camera(), std::move(frame_));
     DrawFrame(frame_, sprite, texture);
+}
+
+Application::World Application::PopulateWorld() {
+    World ret;
+
+    Object obj;
+    Triangle t1(TriMatrix{{0, 0.5, -0.5}, {0, 0.5, 0.5}, {0, 0.5, -0.5}, {1, 1, 1}}, Color{255, 0, 0});
+    Triangle t2(TriMatrix{{0, 1, 0}, {0, 0, 1}, {0, 0, 0}, {1, 1, 1}}, Color{0, 255, 0});
+    Triangle t3(TriMatrix{{0.4, 0.5, 0}, {1, -1, 0}, {1, 0.5, -4}, {1, 1, 1}}, Color{0, 0, 255});
+
+    obj.PushTriangle(t1);
+    obj.PushTriangle(t2);
+    obj.PushTriangle(t3);
+    ret.PushObject(AffineTransform::Identity(), std::move(obj));
+    return ret;
+}
+
+void Application::HandleUp(Spectator* spectator) {
+    spectator->MoveUp();
+}
+
+void Application::HandleDown(Spectator* spectator) {
+    spectator->MoveDown();
+}
+
+void Application::HandleLeft(Spectator* spectator) {
+    spectator->MoveLeft();
+}
+
+void Application::HandleRight(Spectator* spectator) {
+    spectator->MoveRight();
+}
+
+void Application::HandleForward(Spectator* spectator) {
+    spectator->MoveForward();
+}
+
+void Application::HandleBackward(Spectator* spectator) {
+    spectator->MoveBackward();
+}
+
+void Application::HandleTurnRight(Spectator* spectator) {
+    spectator->TurnRight();
+}
+
+void Application::HandleTurnLeft(Spectator* spectator) {
+    spectator->TurnLeft();
 }
 
 }  // namespace Renderer3D

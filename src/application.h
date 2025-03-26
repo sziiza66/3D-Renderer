@@ -34,6 +34,8 @@ private:
     void HandleLoopIteration(const sf::Sprite& sprite, sf::Texture* texture);
 
 private:
+    static World PopulateWorld();
+
     static void HandleUp(Spectator* spectator);
     static void HandleDown(Spectator* spectator);
     static void HandleLeft(Spectator* spectator);
