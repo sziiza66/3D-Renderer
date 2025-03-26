@@ -13,8 +13,6 @@ Matrix4 CalculateFrustumMatrix(double fov, double near_dist, double ratio) {
     assert(!std::isinf(ratio));
 
     double proj_dist = 1.0 / std::tan(fov / 2);
-    double proj_dist2 = proj_dist * proj_dist;
-    double ratio2 = ratio * ratio;
 
     double left_intersect_x_ = -near_dist / proj_dist;
     double right_intersect_x_ = near_dist / proj_dist;

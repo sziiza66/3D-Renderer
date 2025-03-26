@@ -86,7 +86,7 @@ std::vector<Triangle> ClipAgainstZAxis(double near_dist, std::vector<Triangle>&&
         int8_t outside_vertex_ind2 = -1;
         int8_t inside_vertex_ind1 = -1;
         int8_t inside_vertex_ind2 = -1;
-        assert(i < ret.size() && i >= 0);
+        assert(i < ret.size());
         for (uint8_t j = 0; j < 3; ++j) {
             if (ret[i].vertices(2, j) < near_dist) {
                 outside_vertex_ind1 = j;

@@ -4,8 +4,8 @@ namespace Renderer3D {
 
 Application::Application()
     : spectator_(kDefaultWindowWidth * 1.0 / kDefaultWindowHeight),
-      frame_(Frame::Height{kDefaultWindowHeight}, Frame::Width{kDefaultWindowWidth}),
       window_(sf::VideoMode(kDefaultWindowWidth, kDefaultWindowHeight), kWindowName),
+      frame_(Frame::Height{kDefaultWindowHeight}, Frame::Width{kDefaultWindowWidth}),
       world_(PopulateWorld()) {
 }
 

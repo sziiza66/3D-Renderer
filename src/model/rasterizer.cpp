@@ -107,7 +107,6 @@ void FillUpperTriangle(const Triangle& triangle, ConstVertexRef lowest, ConstVer
 }
 
 void DrawTriangle(const Triangle& triangle, Frame* frame, ZBuffer* z_buffer_) {
-
     // Eigen::Block'и вершин треугольника, отсортированные по Ox.
     auto [lowest, middle, highest] = GetVerticalOrderOfVertices(triangle);
 
