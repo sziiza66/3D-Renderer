@@ -12,9 +12,6 @@ Spectator::Spectator(double ratio)
       x_axis_polar_angle_(kDefaultPolarAngle) {
 }
 
-Camera& Spectator::Camera() {
-    return camera_;
-}
 const class Camera& Spectator::Camera() const {
     return camera_;
 }

@@ -3,9 +3,9 @@
 namespace Renderer3D {
 
 Application::Application()
-    : spectator_(kScreenWidth * 1.0 / kScreenHeight),
-      screen_(ScreenHeight{kScreenHeight}, ScreenWidth{kScreenWidth}),
-      frame_(Frame::Height{kScreenHeight}, Frame::Width{kScreenWidth}) {
+    : spectator_(kDefaultWindowWidth * 1.0 / kDefaultWindowHeight),
+      frame_(Frame::Height{kDefaultWindowHeight}, Frame::Width{kDefaultWindowWidth}),
+      window_(sf::VideoMode(kDefaultWindowWidth, kDefaultWindowHeight), kWindowName) {
     // Магические числа, да, потом буду мир в файле хранить, а тут читать.
     Object obj;
     Triangle t1(TriMatrix{{0, 0.5, -0.5}, {0, 0.5, 0.5}, {0, 0.5, -0.5}, {1, 1, 1}}, Color{255, 0, 0});
@@ -20,44 +20,16 @@ Application::Application()
 }
 
 void Application::Run() {
+    sf::Texture texture;
+    sf::Sprite sprite;
+    if (!texture.create(kDefaultWindowWidth, kDefaultWindowHeight)) {
+        throw std::runtime_error("Unable to create texture.\n");
+    }
+    sprite.setTexture(texture);
+    window_.setKeyRepeatEnabled(false);
 
-    while (screen_.IsWindowOpen()) {
-        sf::Event event{};
-        while (screen_.PollWindowEvent(event)) {
-            switch (event.type) {
-                case sf::Event::Closed:
-                    screen_.CloseWindow();
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z)) {
-            HandleUp();
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::X)) {
-            HandleDown();
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-            HandleLeft();
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-            HandleRight();
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-            HandleForward();
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-            HandleBackward();
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::E)) {
-            HandleTurnRight();
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
-            HandleTurnLeft();
-        }
-        UpdateFrame();
+    while (window_.isOpen()) {
+        HandleLoopIteration(sprite, &texture);
     }
 }
 
@@ -93,9 +65,61 @@ void Application::HandleTurnLeft() {
     spectator_.TurnLeft();
 }
 
-void Application::UpdateFrame() {
+void Application::DrawFrame(const Frame& frame, const sf::Sprite& sprite, sf::Texture* texture) {
+    assert(sprite.getTexture() == texture);
+    // Я выяснил, что ботлнек производительности был в том, что я делал лишнее копирование, когда передавал в функцию
+    // sfml массив Uint8, так вот с этой функций я могу его передавать напрямую, без копирования.
+    // Но это ещё не все, я попробовал сделать data_ в классе Frame вида std::vector<sf:Uint8> и сделать отдельную
+    // функцию, принимающую Color и координаты пикселя, всё, чтобы не использовать этот каст, но рендер стал рабтать
+    // заметно медленнее. Это техничеки не UB, как я понял, но если есть способ это убрать и оставить
+    // производительность, хотел бы использовать его.
+    texture->update(reinterpret_cast<const sf::Uint8*>(frame.Data()));
+    window_.clear();
+    window_.draw(sprite);
+    window_.display();
+}
+
+void Application::HandleLoopIteration(const sf::Sprite& sprite, sf::Texture* texture) {
+    assert(sprite.getTexture() == texture);
+
+    sf::Event event{};
+    while (window_.pollEvent(event)) {
+        switch (event.type) {
+            case sf::Event::Closed:
+                window_.close();
+                return;
+            default:
+                return;
+        }
+    }
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z)) {
+        HandleUp();
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::X)) {
+        HandleDown();
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+        HandleLeft();
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+        HandleRight();
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
+        HandleForward();
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+        HandleBackward();
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::E)) {
+        HandleTurnRight();
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
+        HandleTurnLeft();
+    }
+
     frame_ = renderer_.RenderFrame(world_.Objects(), spectator_.Position(), spectator_.Camera(), std::move(frame_));
-    screen_.Display(frame_);
+    DrawFrame(frame_, sprite, texture);
 }
 
 }  // namespace Renderer3D

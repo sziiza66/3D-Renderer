@@ -26,10 +26,10 @@ auto GetVerticalOrderOfVertices(const Triangle& triangle) {
                                          triangle.vertices.col(ret[2])};
 }
 
-void FillSegment(Color col, Frame& frame, ZBuffer& z_buffer_, size_t x, double real_y1, double real_y2, double real_z,
-                 double z_diff_y, double real_z_diff_y) {
+void FillSegment(Color col, size_t x, double real_y1, double real_y2, double real_z, double z_diff_y,
+                 double real_z_diff_y, Frame* frame, ZBuffer* z_buffer_) {
 
-    size_t edge = frame.GetWidth() - 1;
+    size_t edge = frame->GetWidth() - 1;
     assert(edge >= 0);
 
     if (real_y1 < -1) {
@@ -37,22 +37,22 @@ void FillSegment(Color col, Frame& frame, ZBuffer& z_buffer_, size_t x, double r
         real_y1 = -1;
     }
 
-    size_t y1 = ((real_y1 + 1) / kSideOfTheCube) * frame.GetWidth();
-    size_t y2 = ((real_y2 + 1) / kSideOfTheCube) * frame.GetWidth();
+    size_t y1 = ((real_y1 + 1) / kSideOfTheCube) * frame->GetWidth();
+    size_t y2 = ((real_y2 + 1) / kSideOfTheCube) * frame->GetWidth();
 
     for (size_t y = y1; y <= (y2 >= edge ? edge : y2); ++y, real_z += z_diff_y) {
-        if (real_z < z_buffer_(x, y)) {
-            z_buffer_(x, y) = real_z;
-            frame(x, y) = col;
+        if (real_z < (*z_buffer_)(x, y)) {
+            (*z_buffer_)(x, y) = real_z;
+            (*frame)(x, y) = col;
         }
     }
 }
 
-void FillLowerTriangle(const Triangle& triangle, Frame& frame, ZBuffer& z_buffer_, ConstVertexRef lowest,
-                       ConstVertexRef middle, ConstVertexRef highest, double real_z_diff_y, double z_diff_y,
-                       double z_diff_x, double* real_x, double* real_z, size_t* x, double* prev_y) {
+void FillLowerTriangle(const Triangle& triangle, ConstVertexRef lowest, ConstVertexRef middle, ConstVertexRef highest,
+                       double real_z_diff_y, double z_diff_y, double z_diff_x, Frame* frame, ZBuffer* z_buffer_,
+                       double* real_x, double* real_z, size_t* x, double* prev_y) {
     double mid_x = (middle(0) <= 1 ? middle(0) : 1);
-    double dx = kSideOfTheCube / frame.GetHeight();
+    double dx = kSideOfTheCube / frame->GetHeight();
     for (; *real_x < mid_x; ++(*x), *real_x += dx, *real_z += z_diff_x) {
         // real_y1, real_y2 -- y координаты отрезка в видимом пространстве, который будет нарисован на экране.
         double real_y1 = (highest(0) == lowest(0) ? highest(1)
@@ -73,15 +73,15 @@ void FillLowerTriangle(const Triangle& triangle, Frame& frame, ZBuffer& z_buffer
         *prev_y = real_y1;
 
         // Рисуем этот отрезок
-        FillSegment(triangle.color, frame, z_buffer_, *x, real_y1, real_y2, *real_z, z_diff_y, real_z_diff_y);
+        FillSegment(triangle.color, *x, real_y1, real_y2, *real_z, z_diff_y, real_z_diff_y, frame, z_buffer_);
     }
 }
 
-void FillUpperTriangle(const Triangle& triangle, Frame& frame, ZBuffer& z_buffer_, ConstVertexRef lowest,
-                       ConstVertexRef middle, ConstVertexRef highest, double real_z_diff_y, double z_diff_y,
-                       double z_diff_x, double* real_x, double* real_z, size_t* x, double* prev_y) {
+void FillUpperTriangle(const Triangle& triangle, ConstVertexRef lowest, ConstVertexRef middle, ConstVertexRef highest,
+                       double real_z_diff_y, double z_diff_y, double z_diff_x, Frame* frame, ZBuffer* z_buffer_,
+                       double* real_x, double* real_z, size_t* x, double* prev_y) {
     double top_x = (highest(0) <= 1 ? highest(0) : 1);
-    double dx = kSideOfTheCube / frame.GetHeight();
+    double dx = kSideOfTheCube / frame->GetHeight();
     for (; *real_x < top_x; ++(*x), *real_x += dx, *real_z += z_diff_x) {
         // real_y1, real_y2 -- y координаты отрезка в видимом пространстве, который будет нарисован на экране.
         double real_y1 = (highest(0) == lowest(0) ? highest(1)
@@ -102,11 +102,11 @@ void FillUpperTriangle(const Triangle& triangle, Frame& frame, ZBuffer& z_buffer
         *prev_y = real_y1;
 
         // Рисуем этот отрезок
-        FillSegment(triangle.color, frame, z_buffer_, *x, real_y1, real_y2, *real_z, z_diff_y, real_z_diff_y);
+        FillSegment(triangle.color, *x, real_y1, real_y2, *real_z, z_diff_y, real_z_diff_y, frame, z_buffer_);
     }
 }
 
-void DrawTriangle(Frame& frame, ZBuffer& z_buffer_, const Triangle& triangle) {
+void DrawTriangle(const Triangle& triangle, Frame* frame, ZBuffer* z_buffer_) {
 
     // Eigen::Block'и вершин треугольника, отсортированные по Ox.
     auto [lowest, middle, highest] = GetVerticalOrderOfVertices(triangle);
@@ -132,23 +132,24 @@ void DrawTriangle(Frame& frame, ZBuffer& z_buffer_, const Triangle& triangle) {
     // z_diff_x -- аналогично для x.
     // real_x, real_y, real_z -- координаты поддреживаемой точки в видимом пространстве.
     double real_z_diff_y = (v1(2) == 0 ? 0 : -v1(1) / v1(2));
-    double z_diff_y = real_z_diff_y * kSideOfTheCube / frame.GetWidth();
-    double z_diff_x = (v1(2) == 0 ? 0 : -v1(0) / v1(2) * kSideOfTheCube / frame.GetHeight());
+    double z_diff_y = real_z_diff_y * kSideOfTheCube / frame->GetWidth();
+    double z_diff_x = (v1(2) == 0 ? 0 : -v1(0) / v1(2) * kSideOfTheCube / frame->GetHeight());
 
     // Я передаю эти четыре переменные по указателю как изменяемые входные данные. Я мб позже сменю это на return tuple
     // или struct, мне нужно подумать.
     double real_x = (lowest(0) >= -1 ? lowest(0) : -1);
     double prev_y = lowest(1);
     double real_z = lowest(2) - (v1(2) == 0 ? 0 : v1(0) / v1(2)) * (real_x - lowest(0));
-    size_t x = frame.GetHeight() * ((real_x + 1) / kSideOfTheCube);
-    x = (x >= frame.GetHeight() ? frame.GetHeight() - 1 : x);
+    size_t x = frame->GetHeight() * ((real_x + 1) / kSideOfTheCube);
+    x = (x >= frame->GetHeight() ? frame->GetHeight() - 1 : x);
 
     // Треугольник разбивается на два других с одной из сторон параллельной Oy. Далее отриссовываем эти треугольники на
     // экране соотв. функциями.
-    FillLowerTriangle(triangle, frame, z_buffer_, lowest, middle, highest, real_z_diff_y, z_diff_y, z_diff_x, &real_x,
+    // Я не уверен, нужно ли всё-таки менять название функции, теперь видно, что меняется?
+    FillLowerTriangle(triangle, lowest, middle, highest, real_z_diff_y, z_diff_y, z_diff_x, frame, z_buffer_, &real_x,
                       &real_z, &x, &prev_y);
 
-    FillUpperTriangle(triangle, frame, z_buffer_, lowest, middle, highest, real_z_diff_y, z_diff_y, z_diff_x, &real_x,
+    FillUpperTriangle(triangle, lowest, middle, highest, real_z_diff_y, z_diff_y, z_diff_x, frame, z_buffer_, &real_x,
                       &real_z, &x, &prev_y);
 }
 
@@ -159,7 +160,7 @@ Frame BufferRasterizer::MakeFrame(const std::vector<Triangle>& triangles, Frame&
     z_buffer_.FitTo(ret);
     ret.FillWithBlackColor();
     for (const auto& triangle : triangles) {
-        DrawTriangle(ret, z_buffer_, triangle);
+        DrawTriangle(triangle, &ret, &z_buffer_);
     }
     return ret;
 }

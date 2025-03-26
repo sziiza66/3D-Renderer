@@ -16,11 +16,6 @@ public:
     Spectator() = delete;
     explicit Spectator(double ratio);
 
-    // Я ставлю пометку [[nodiscard]] в местах, где среда подсказывает мне это сделать, я думал, я правильно понял, в
-    // чём смысл этой пометки, но вопреки моим ожиданиям, эту функцию среда не посоветовала обозначить [[nodiscard]],
-    // как я понял, это из-за того, что функция не const и что на может делать что-то, кроме как давать доступ к камере,
-    // но это не так, я поставлю [[nodiscard]].
-    [[nodiscard]] class Camera& Camera();
     [[nodiscard]] const class Camera& Camera() const;
     [[nodiscard]] const AffineTransform& Position() const;
 

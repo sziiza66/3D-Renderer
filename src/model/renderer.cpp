@@ -99,7 +99,6 @@ std::vector<Triangle> ClipAgainstZAxis(double near_dist, std::vector<Triangle>&&
         }
         // Весь треугольник выкидывается.
         if (inside_vertex_ind2 == -1) {
-            // Тут нужно сделать --i, т.к. я удаляю треугольник.
             std::swap(ret[i], ret.back());
             ret.pop_back();
             continue;
