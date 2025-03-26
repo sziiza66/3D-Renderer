@@ -1,6 +1,5 @@
 #pragma once
 
-#include "frame.h"
 #include "rasterizer.h"
 #include "camera.h"
 #include "object.h"

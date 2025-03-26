@@ -1,7 +1,10 @@
 #pragma once
 
+#include <cstddef>
+#include <sys/types.h>
+#include <vector>
+
 #include "color.h"
-#include "../linalg.h"
 
 namespace Renderer3D::Kernel {
 

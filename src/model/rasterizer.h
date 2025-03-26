@@ -1,5 +1,5 @@
 #pragma once
-#include "frame.h"
+
 #include "triangle.h"
 #include "zbuffer.h"
 

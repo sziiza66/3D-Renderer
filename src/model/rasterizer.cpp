@@ -1,6 +1,7 @@
 #include "rasterizer.h"
 
 #include <cassert>
+
 #include "zbuffer.h"
 
 namespace Renderer3D::Kernel {

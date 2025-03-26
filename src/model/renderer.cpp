@@ -1,7 +1,6 @@
 #include "renderer.h"
 
 #include <cassert>
-#include <vector>
 
 namespace Renderer3D::Kernel {
 

@@ -1,5 +1,7 @@
 #include "zbuffer.h"
 
+#include <limits>
+
 namespace Renderer3D::Kernel {
 
 void ZBuffer::FitTo(const Frame& frame) {

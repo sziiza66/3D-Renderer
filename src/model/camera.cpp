@@ -1,8 +1,5 @@
 #include "camera.h"
 
-#include <cassert>
-#include <numbers>
-
 namespace Renderer3D::Kernel {
 
 namespace {

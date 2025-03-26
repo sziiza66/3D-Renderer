@@ -1,5 +1,5 @@
 #pragma once
-#include <vector>
+
 #include "triangle.h"
 
 namespace Renderer3D::Kernel {
