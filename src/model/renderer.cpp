@@ -131,10 +131,10 @@ void FetchTriangles(const std::vector<SubObject>& objects, std::vector<Triangle>
     // Тут и не нужен был костыль в качестве ind = 0 дефолтного аргумента функции, я просто затпуил.
     size_t ind = triangles->size();
     for (const SubObject& sobj : objects) {
-        for (const Triangle& triangle : sobj.obj.GetTriangles()) {
+        for (const Triangle& triangle : sobj.obj.Triangles()) {
             triangles->emplace_back(triangle);
         }
-        FetchTriangles(sobj.obj.GetSubobjects(), triangles);
+        FetchTriangles(sobj.obj.Subobjects(), triangles);
         for (; ind < triangles->size(); ++ind) {
             (*triangles)[ind].vertices = sobj.pos * (*triangles)[ind].vertices;
         }

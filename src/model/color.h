@@ -4,12 +4,18 @@
 
 namespace Renderer3D::Kernel {
 
-// Не знаю, правильно ли сделал, но мне кажется, эта структура должна быть в отдельном файле, потому что нужна она
-// везде, но ни к чему конкретно не принадлежит.
-struct Color {
+struct DiscreteColor {
     uint8_t r = 0;
     uint8_t g = 0;
     uint8_t b = 0;
 };
+
+struct Color {
+    double r = 0;
+    double g = 0;
+    double b = 0;
+};
+
+DiscreteColor MakeDiscrete(const Color& col);
 
 };  // namespace Renderer3D::Kernel

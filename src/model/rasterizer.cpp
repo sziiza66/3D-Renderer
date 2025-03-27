@@ -27,23 +27,27 @@ auto GetVerticalOrderOfVertices(const Triangle& triangle) {
                                          triangle.vertices.col(ret[2])};
 }
 
-void FillSegment(Color col, size_t x, double real_y1, double real_y2, double real_z, double z_diff_y,
+DiscreteColor CalculateColorOfPizxel(const Color& col) {
+    return MakeDiscrete(col);
+}
+
+void FillSegment(const Color& col, size_t x, double real_y1, double real_y2, double real_z, double z_diff_y,
                  double real_z_diff_y, Frame* frame, ZBuffer* z_buffer_) {
     if (real_y1 < -1) {
         real_z += (-real_y1 - 1) * real_z_diff_y;
         real_y1 = -1;
     }
 
-    size_t y1 = ((real_y1 + 1) / kSideOfTheCube) * frame->GetWidth();
-    size_t y2 = ((real_y2 + 1) / kSideOfTheCube) * frame->GetWidth() + 1;
+    size_t y1 = ((real_y1 + 1) / kSideOfTheCube) * frame->Width();
+    size_t y2 = ((real_y2 + 1) / kSideOfTheCube) * frame->Width() + 1;
     assert(y1 < y2);
 
-    size_t edge = (y2 >= frame->GetWidth() ? frame->GetWidth() : y2);
+    size_t edge = (y2 >= frame->Width() ? frame->Width() : y2);
 
     for (size_t y = y1; y != (y2 >= edge ? edge : y2); ++y, real_z += z_diff_y) {
         if (real_z < (*z_buffer_)(x, y)) {
             (*z_buffer_)(x, y) = real_z;
-            (*frame)(x, y) = col;
+            (*frame)(x, y) = CalculateColorOfPizxel(col);
         }
     }
 }
@@ -52,7 +56,7 @@ void FillLowerTriangle(const Triangle& triangle, ConstVertexRef lowest, ConstVer
                        double real_z_diff_y, double z_diff_y, double z_diff_x, Frame* frame, ZBuffer* z_buffer_,
                        double* real_x, double* real_z, size_t* x, double* prev_y) {
     double mid_x = (middle(0) <= 1 ? middle(0) : 1);
-    double dx = kSideOfTheCube / frame->GetHeight();
+    double dx = kSideOfTheCube / frame->Height();
     for (; *real_x < mid_x; ++(*x), *real_x += dx, *real_z += z_diff_x) {
         // real_y1, real_y2 -- y координаты отрезка в видимом пространстве, который будет нарисован на экране.
         double real_y1 = highest(0) == lowest(0)
@@ -81,7 +85,7 @@ void FillUpperTriangle(const Triangle& triangle, ConstVertexRef lowest, ConstVer
                        double real_z_diff_y, double z_diff_y, double z_diff_x, Frame* frame, ZBuffer* z_buffer_,
                        double* real_x, double* real_z, size_t* x, double* prev_y) {
     double top_x = (highest(0) <= 1 ? highest(0) : 1);
-    double dx = kSideOfTheCube / frame->GetHeight();
+    double dx = kSideOfTheCube / frame->Height();
     for (; *real_x < top_x; ++(*x), *real_x += dx, *real_z += z_diff_x) {
         // real_y1, real_y2 -- y координаты отрезка в видимом пространстве, который будет нарисован на экране.
         double real_y1 = highest(0) == lowest(0)
@@ -131,16 +135,16 @@ void DrawTriangle(const Triangle& triangle, Frame* frame, ZBuffer* z_buffer_) {
     // z_diff_x -- аналогично для x.
     // real_x, real_y, real_z -- координаты поддреживаемой точки в видимом пространстве.
     double real_z_diff_y = (v1(2) == 0 ? 0 : -v1(1) / v1(2));
-    double z_diff_y = real_z_diff_y * kSideOfTheCube / frame->GetWidth();
-    double z_diff_x = (v1(2) == 0 ? 0 : -v1(0) / v1(2) * kSideOfTheCube / frame->GetHeight());
+    double z_diff_y = real_z_diff_y * kSideOfTheCube / frame->Width();
+    double z_diff_x = (v1(2) == 0 ? 0 : -v1(0) / v1(2) * kSideOfTheCube / frame->Height());
 
     // Я передаю эти четыре переменные по указателю как изменяемые входные данные. Я мб позже сменю это на return tuple
     // или struct, мне нужно подумать.
     double real_x = (lowest(0) >= -1 ? lowest(0) : -1);
     double prev_y = lowest(1);
     double real_z = lowest(2) - (v1(2) == 0 ? 0 : v1(0) / v1(2)) * (real_x - lowest(0));
-    size_t x = frame->GetHeight() * ((real_x + 1) / kSideOfTheCube);
-    x = (x >= frame->GetHeight() ? frame->GetHeight() - 1 : x);
+    size_t x = frame->Height() * ((real_x + 1) / kSideOfTheCube);
+    x = (x >= frame->Height() ? frame->Height() - 1 : x);
 
     // Треугольник разбивается на два других с одной из сторон параллельной Oy. Далее отриссовываем эти треугольники на
     // экране соотв. функциями.

@@ -5,6 +5,7 @@
 namespace Renderer3D {
 
 using Matrix4 = Eigen::Matrix4d;
+using Matrix3 = Eigen::Matrix3d;
 using Vector4 = Eigen::Vector4d;
 using Vector3 = Eigen::Vector3d;
 // Я нашел Eigen::Transform<double, 3, Eigen::Affine>, которая предназначена именно для моих целей.

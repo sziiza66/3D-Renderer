@@ -5,7 +5,7 @@ namespace Renderer3D {
 Application::Application()
     : spectator_(kDefaultWindowWidth * 1.0 / kDefaultWindowHeight),
       window_(sf::VideoMode(kDefaultWindowWidth, kDefaultWindowHeight), kWindowName),
-      frame_(Frame::Height{kDefaultWindowHeight}, Frame::Width{kDefaultWindowWidth}),
+      frame_(Frame::UHeight{kDefaultWindowHeight}, Frame::UWidth{kDefaultWindowWidth}),
       world_(PopulateWorld()) {
 }
 
@@ -66,9 +66,10 @@ Application::World Application::PopulateWorld() {
     World ret;
 
     Object obj;
-    Triangle t1(TriMatrix{{0, 0.5, -0.5}, {0, 0.5, 0.5}, {0, 0.5, -0.5}, {1, 1, 1}}, Color{255, 0, 0});
-    Triangle t2(TriMatrix{{0, 1, 0}, {0, 0, 1}, {0, 0, 0}, {1, 1, 1}}, Color{0, 255, 0});
-    Triangle t3(TriMatrix{{0.4, 0.5, 0}, {1, -1, 0}, {1, 0.5, -4}, {1, 1, 1}}, Color{0, 0, 255});
+    Triangle t1(TriMatrix{{0, 0.5, -0.5}, {0, 0.5, 0.5}, {0, 0.5, -0.5}, {1, 1, 1}}, Matrix3::Identity(),
+                Color{1, 0, 0});
+    Triangle t2(TriMatrix{{0, 1, 0}, {0, 0, 1}, {0, 0, 0}, {1, 1, 1}}, Matrix3::Identity(), Color{0, 1, 0});
+    Triangle t3(TriMatrix{{0.4, 0.5, 0}, {1, -1, 0}, {1, 0.5, -4}, {1, 1, 1}}, Matrix3::Identity(), Color{0, 0, 1});
 
     obj.PushTriangle(t1);
     obj.PushTriangle(t2);

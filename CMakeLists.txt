@@ -5,8 +5,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
-# set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
+# set(CMAKE_BUILD_TYPE Debug)
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
@@ -26,6 +26,7 @@ FetchContent_MakeAvailable(SFML)
 SET(SOURCES
     src/main.cpp
     src/model/camera.cpp
+    src/model/color.cpp
     src/model/rasterizer.cpp
     src/model/object.cpp
     src/model/renderer.cpp

@@ -10,33 +10,35 @@ namespace Renderer3D::Kernel {
 
 class Frame {
     // Нужно из-за специфики sfml.
-    struct ColorWithAlpha {
-        Color color;
+    struct DiscreteColorWithAlpha {
+        DiscreteColor color;
         uint8_t alpha = kDefaultAlpha;
 
         static constexpr uint8_t kDefaultAlpha = 255;
     };
 
 public:
-    enum Width : ssize_t;
-    enum Height : ssize_t;
+    // Приписка U нужна, чтобы компилятор не путал енамы с функциями Height и Width, хотя я могу в некоторых случаях
+    // обозначить перед именем енама 'enum', и это помогает, но это работает не во всех случаях.
+    enum UWidth : ssize_t;
+    enum UHeight : ssize_t;
 
     Frame() = default;
-    Frame(Height height, Width width);
+    Frame(UHeight height, UWidth width);
 
-    Color& operator()(size_t x, size_t y);
-    const Color& operator()(size_t x, size_t y) const;
+    DiscreteColor& operator()(size_t x, size_t y);
+    const DiscreteColor& operator()(size_t x, size_t y) const;
 
     void FillWithBlackColor();
-    [[nodiscard]] size_t GetHeight() const;
-    [[nodiscard]] size_t GetWidth() const;
-    [[nodiscard]] const ColorWithAlpha* Data() const;
+    [[nodiscard]] size_t Height() const;
+    [[nodiscard]] size_t Width() const;
+    [[nodiscard]] const DiscreteColorWithAlpha* Data() const;
 
 private:
-    static constexpr ColorWithAlpha kWhite = {0, 0, 0, ColorWithAlpha::kDefaultAlpha};
+    static constexpr DiscreteColorWithAlpha kWhite = {0, 0, 0, DiscreteColorWithAlpha::kDefaultAlpha};
 
 private:
-    std::vector<ColorWithAlpha> data_;
+    std::vector<DiscreteColorWithAlpha> data_;
     ssize_t width_ = 0;
 };
 

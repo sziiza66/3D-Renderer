@@ -5,8 +5,8 @@
 namespace Renderer3D::Kernel {
 
 void ZBuffer::FitTo(const Frame& frame) {
-    width_ = frame.GetWidth();
-    buffer_.assign(frame.GetHeight() * width_, std::numeric_limits<double>::infinity());
+    width_ = frame.Width();
+    buffer_.assign(frame.Height() * width_, std::numeric_limits<double>::infinity());
 }
 
 const double& ZBuffer::operator()(size_t x, size_t y) const {
