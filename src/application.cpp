@@ -58,7 +58,8 @@ void Application::HandleLoopIteration(const sf::Sprite& sprite, sf::Texture* tex
         }
     }
 
-    frame_ = renderer_.RenderFrame(world_.Objects(), spectator_.Position(), spectator_.Camera(), std::move(frame_));
+    frame_ = renderer_.RenderFrame(world_.Objects(), spectator_.Position(), spectator_.Camera(), world_.AmbientLight(),
+                                   std::move(frame_));
     DrawFrame(frame_, sprite, texture);
 }
 

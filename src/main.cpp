@@ -1,7 +1,7 @@
 #include "application.h"
 #include "utility/except.h"
 
-#define NDEBUG
+// #define NDEBUG
 
 int main() {
     try {
