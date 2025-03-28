@@ -4,6 +4,14 @@
 
 namespace Renderer3D::Kernel {
 
+namespace {
+
+double NormalizeRBG(double r_or_g_or_b) {
+    return r_or_g_or_b < 1 ? (r_or_g_or_b > 0 ? r_or_g_or_b : 0) : 1;
+}
+
+}  // namespace
+
 Color operator+(const Color& lhs, const Color& rhs) {
     return {lhs.r + rhs.r, lhs.g + rhs.g, lhs.b + rhs.b};
 }
@@ -42,8 +50,9 @@ Color& operator*=(Color& lhs, double rhs) {
 }
 
 DiscreteColor MakeDiscrete(const Color& col) {
-    return DiscreteColor(col.r * std::numeric_limits<uint8_t>::max(), col.g * std::numeric_limits<uint8_t>::max(),
-                         col.b * std::numeric_limits<uint8_t>::max());
+    return DiscreteColor(NormalizeRBG(col.r) * std::numeric_limits<uint8_t>::max(),
+                         NormalizeRBG(col.g) * std::numeric_limits<uint8_t>::max(),
+                         NormalizeRBG(col.b) * std::numeric_limits<uint8_t>::max());
 }
 
 }  // namespace Renderer3D::Kernel

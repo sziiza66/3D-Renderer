@@ -15,6 +15,7 @@ class Application {
     using Frame = Kernel::Frame;
     using Triangle = Kernel::Triangle;
     using Object = Kernel::Object;
+    using PointLightSource = Kernel::PointLightSource;
     using Renderer = Kernel::Renderer;
     using Spectator = Kernel::Spectator;
     using World = Kernel::World;

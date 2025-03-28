@@ -2,6 +2,9 @@
 
 #include <cassert>
 
+#include <iomanip>
+#include <iostream>
+
 #include "zbuffer.h"
 
 namespace Renderer3D::Kernel {
@@ -38,14 +41,13 @@ DiscreteColor CalculateColorOfPizxel(const Color& col, const Vector3& inter_coor
     Color modulator = ambient;
     for (const PLSInSpace& pl : pls) {
         double dotprod = normal.dot((inter_coords - pl.position).normalized());
-        modulator += (dotprod >= 0 ? dotprod : 0) *
+        modulator += (dotprod > 0 ? dotprod : 0) *
                      CalculateLightIntensityColor(pl.source_data, (inter_coords - pl.position).squaredNorm());
     }
-
-    return MakeDiscrete(ret);
+    return MakeDiscrete(ret * modulator);
 }
 
-Vector3 InverseInterpolation(const Vector3& coords) {
+Vector3 InterpolateBack(const Vector3& coords) {
     double z = 1.0 / coords(2);
     return {z * coords(0), z * coords(1), z};
 }
@@ -56,8 +58,8 @@ void FillSegment(const Color& col, const Vector3& normal, const Color& ambient, 
     Vector3 inter_coords = inter_coords_1;
     Vector3 inter_coords_inc = (inter_coords_2 - inter_coords_1) / (real_y2 - real_y1);
     if (real_y1 < -1) {
-        inter_coords += inter_coords_inc * (-real_y1 - 1);
-        real_z += (-real_y1 - 1) * real_z_diff_y;
+        inter_coords += inter_coords_inc * (-1 - real_y1);
+        real_z += (-1 - real_y1) * real_z_diff_y;
         real_y1 = -1;
     }
 
@@ -70,7 +72,7 @@ void FillSegment(const Color& col, const Vector3& normal, const Color& ambient, 
     for (size_t y = y1; y != (y2 >= edge ? edge : y2); ++y, real_z += z_diff_y) {
         if (real_z < (*z_buffer_)(x, y)) {
             (*z_buffer_)(x, y) = real_z;
-            (*frame)(x, y) = CalculateColorOfPizxel(col, InverseInterpolation(inter_coords), normal, ambient, pls);
+            (*frame)(x, y) = CalculateColorOfPizxel(col, InterpolateBack(inter_coords), normal, ambient, pls);
         }
         inter_coords += inter_coords_inc * kSideOfTheCube / frame->Width();
     }
@@ -103,7 +105,7 @@ void FillLowerTriangle(const Triangle& triangle, const Vector3& normal, const Co
                                                                           (highest(0) - lowest(0));
         Vector3 inter_coords_2 =
             middle(0) == lowest(0) ? middle_p
-                                   : lowest_p + (middle_p - lowest_p) * (*real_x - middle(0)) / (middle(0) - lowest(0));
+                                   : lowest_p + (middle_p - lowest_p) * (*real_x - lowest(0)) / (middle(0) - lowest(0));
         // --------------------
 
         if (real_y1 > real_y2) {
@@ -238,6 +240,7 @@ Frame BufferRasterizer::MakeFrame(const std::vector<Triangle>& triangles, const 
                                   const std::vector<PLSInSpace>& pls, const std::vector<Vector3>& normals,
                                   const Color& ambient, Frame&& frame) {
     assert(triangles.size() == normals.size());
+    std::cout << std::setprecision(18) << std::fixed;
     Frame ret(std::move(frame));
     z_buffer_.FitTo(ret);
     ret.FillWithBlackColor();

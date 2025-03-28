@@ -2,6 +2,8 @@
 
 #include <cassert>
 
+#include <iostream>
+
 namespace Renderer3D::Kernel {
 
 namespace {
@@ -70,6 +72,9 @@ void ClipTriangleCase2(double near_dist, int8_t outside_vertex_ind, int8_t insid
     inside_vertex1_t2 = inside_vertex2_t2 + (outside_vertex_cpy - inside_vertex2_t2) *
                                                 (near_dist - inside_vertex2_t2(2)) /
                                                 (outside_vertex_cpy(2) - inside_vertex2_t2(2));
+    Vector4 temp = inside_vertex1_t2;
+    inside_vertex1_t2 = inside_vertex2_t2;
+    inside_vertex2_t2 = temp;
 
     assert(outside_vertex_t2(2) == near_dist);
 }
@@ -131,6 +136,7 @@ void FetchAndTransformData(const std::vector<SubObject>& objects, std::vector<Tr
     assert(point_lights);
     // Тут и не нужен был костыль в качестве ind = 0 дефолтного аргумента функции, я просто затупил.
     size_t ind = triangles->size();
+    size_t ind_pls = point_lights->size();
     for (const SubObject& sobj : objects) {
         for (const Triangle& triangle : sobj.obj.Triangles()) {
             triangles->emplace_back(triangle);
@@ -142,8 +148,8 @@ void FetchAndTransformData(const std::vector<SubObject>& objects, std::vector<Tr
         for (; ind < triangles->size(); ++ind) {
             (*triangles)[ind].vertices = sobj.pos * (*triangles)[ind].vertices;
         }
-        for (; ind < point_lights->size(); ++ind) {
-            (*point_lights)[ind].position += sobj.pos.translation();
+        for (; ind_pls < point_lights->size(); ++ind_pls) {
+            (*point_lights)[ind_pls].position += sobj.pos.translation();
         }
     }
 }
@@ -180,6 +186,7 @@ Frame Renderer::RenderFrame(const std::vector<SubObject>& objects, const AffineT
         Vector3 v1 = triangle.vertices.col(1).head(3) - triangle.vertices.col(0).head(3);
         Vector3 v2 = triangle.vertices.col(2).head(3) - triangle.vertices.col(0).head(3);
         normal_buffer_.emplace_back(v1.cross(v2).normalized());
+        // std::cout << v1.cross(v2).normalized() << "\n\n";
     }
 
     for (const Triangle& triangle : triangle_buffer_) {
@@ -190,7 +197,8 @@ Frame Renderer::RenderFrame(const std::vector<SubObject>& objects, const AffineT
         ApplyFrustumTransformationOnTriangle(camera, &triangle);
     }
 
-    return rasterizer_.MakeFrame(triangle_buffer_, preserved_buffer_, point_light_buffer_, normal_buffer_, ambient_light, std::move(frame));
+    return rasterizer_.MakeFrame(triangle_buffer_, preserved_buffer_, point_light_buffer_, normal_buffer_,
+                                 ambient_light, std::move(frame));
 }
 
 }  // namespace Renderer3D::Kernel
