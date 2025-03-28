@@ -20,8 +20,8 @@ class Frame {
 public:
     // Приписка U нужна, чтобы компилятор не путал енамы с функциями Height и Width, хотя я могу в некоторых случаях
     // обозначить перед именем енама 'enum', и это помогает, но это работает не во всех случаях.
-    enum UWidth : ssize_t;
-    enum UHeight : ssize_t;
+    enum UWidth : size_t;
+    enum UHeight : size_t;
 
     Frame() = default;
     Frame(UHeight height, UWidth width);

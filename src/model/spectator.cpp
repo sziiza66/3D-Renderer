@@ -12,6 +12,16 @@ Spectator::Spectator(double ratio)
       x_axis_polar_angle_(kDefaultPolarAngle) {
 }
 
+Spectator::Spectator(double ratio, double movement_speed)
+    : camera_(ratio),
+      position_(AffineTransform::Identity()),
+      left_rotation_(Eigen::AngleAxisd(-kDefaultAngularSpeed, Vector3::UnitX())),
+      right_rotation_(Eigen::AngleAxisd(kDefaultAngularSpeed, Vector3::UnitX())),
+      movement_speed_(std::isinf(movement_speed) ? 0 : movement_speed),
+      angular_speed_(kDefaultAngularSpeed),
+      x_axis_polar_angle_(kDefaultPolarAngle) {
+}
+
 const class Camera& Spectator::Camera() const {
     return camera_;
 }

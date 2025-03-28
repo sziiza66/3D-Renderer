@@ -15,6 +15,7 @@ public:
     // по умолчанию, мы типичную ситуацию делаем нетипичной.
     Spectator() = delete;
     explicit Spectator(double ratio);
+    Spectator(double ratio, double movement_speed);
 
     [[nodiscard]] const class Camera& Camera() const;
     [[nodiscard]] const AffineTransform& Position() const;

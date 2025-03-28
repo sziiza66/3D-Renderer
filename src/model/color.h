@@ -10,6 +10,7 @@ struct Color {
     double b = 0;
 };
 
+// Добавил всё это для удобства в добавлении освещения и затенения, не знаю, насклько плохо, что тут теперь насрано?
 Color operator+(const Color& lhs, const Color& rhs);
 Color operator*(const Color& lhs, const Color& rhs);
 Color operator*(double lhs, const Color& rhs);

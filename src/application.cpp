@@ -1,9 +1,11 @@
 #include "application.h"
 
+#include "model/utility/object_util.h"
+
 namespace Renderer3D {
 
 Application::Application()
-    : spectator_(kDefaultWindowWidth * 1.0 / kDefaultWindowHeight),
+    : spectator_(kDefaultWindowWidth * 1.0 / kDefaultWindowHeight, kSpectatorMovementSpeed),
       window_(sf::VideoMode(kDefaultWindowWidth, kDefaultWindowHeight), kWindowName),
       frame_(Frame::UHeight{kDefaultWindowHeight}, Frame::UWidth{kDefaultWindowWidth}),
       world_(PopulateWorld()) {
@@ -66,7 +68,7 @@ void Application::HandleLoopIteration(const sf::Sprite& sprite, sf::Texture* tex
 Application::World Application::PopulateWorld() {
     World ret;
 
-    Object obj;
+    // Object obj;
     // Triangle t1(TriMatrix{{0, 0.5, -0.5}, {0, 0.5, 0.5}, {0, 0.5, -0.5}, {1, 1, 1}}, Matrix3::Identity(),
     //             Color{1, 0, 0});
     // Triangle t2(TriMatrix{{0, 1, 0}, {0, 0, 1}, {0, 0, 0}, {1, 1, 1}}, Matrix3::Identity(), Color{0, 1, 0});
@@ -74,19 +76,25 @@ Application::World Application::PopulateWorld() {
     Triangle t(TriMatrix{{0, 0, 0}, {10, 0, -10}, {0, -10, 10}, {1, 1, 1}}, Matrix3{{-1, -1, -1}, {0, 0, 0}, {0, 0, 0}},
                Color{0.5, 0.5, 0.5});
 
-    Kernel::PointLightSource light({2, 2, 2}, 0, -2, 5);
+    Kernel::PointLightSource light({10, 8, 10}, 0, -3, 0.1);
     Object lamp;
     lamp.PushPointLightSource(light);
     AffineTransform lamp_pos = AffineTransform::Identity();
-    lamp_pos.translation() += Vector3{1, 0, 0};
+    lamp_pos.translation() += Vector3{20, 0, 0};
 
     // obj.PushTriangle(t1);
     // obj.PushTriangle(t2);
     // obj.PushTriangle(t3);
-    obj.PushTriangle(t);
-
-    ret.PushObject(AffineTransform::Identity(), std::move(obj));
+    // Object obj;
+    // obj.PushTriangle(t);
+    // ret.PushObject(AffineTransform::Identity(), std::move(obj));
+    ret.PushObject(AffineTransform::Identity(), std::move(Kernel::CreateBall(10, {0.5, 0.5, 1})));
     ret.PushObject(lamp_pos, std::move(lamp));
+    lamp_pos.translation() -= Vector3{40, 0, 0};
+    Object lamp2;
+    Kernel::PointLightSource light2({2, 4, 2}, 0, -3, 0.1);
+    lamp2.PushPointLightSource(light2);
+    ret.PushObject(lamp_pos, std::move(lamp2));
 
     return ret;
 }

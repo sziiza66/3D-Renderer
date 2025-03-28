@@ -35,7 +35,7 @@ auto GetVerticalOrderOfVerticesAndAttributes(const TriMatrix& projected_vertices
 }
 
 Color CalculateLightIntensityColor(const PointLightSource& source, double d2) {
-    return source.color / (source.k_const + source.k_linear * std::sqrt(d2) + source.k_quadr * d2);
+    return source.color / (std::abs(source.k_const + source.k_linear * std::sqrt(d2) + source.k_quadr * d2));
 }
 
 DiscreteColor CalculateColorOfPizxel(const Color& diffuse_color, const Color& ambient,
@@ -43,7 +43,7 @@ DiscreteColor CalculateColorOfPizxel(const Color& diffuse_color, const Color& am
     Color ret = diffuse_color;
     Color modulator = ambient;
     for (const PLSInSpace& pl : pls) {
-        double dotprod = normal.dot((point - pl.position).normalized());
+        double dotprod = std::abs(normal.dot((point - pl.position).normalized()));
         modulator += (dotprod > 0 ? dotprod : 0) *
                      CalculateLightIntensityColor(pl.source_data, (point - pl.position).squaredNorm());
     }

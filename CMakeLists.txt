@@ -10,7 +10,8 @@ set(CMAKE_BUILD_TYPE Release)
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-# Я включил все мне известные флаги оптимизации в релиз сборку, -ffast-math может быть сомнительным разве что.
+# Я включил все мне известные флаги оптимизации в релиз сборку, -ffast-math может быть сомнительным разве что, 
+# с ним нельзя использовать isinf и вообще с +-inf? как я понял.
 # По сравнению с дебаг сборкой летает.
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -mtune=native -flto -unroll-loops -mavx2 -mbmi -mbmi2 -mpopcnt -mlzcnt -mfma -mabm -ffast-math")
 
@@ -35,7 +36,8 @@ SET(SOURCES
     src/model/zbuffer.cpp
     src/model/spectator.cpp
     src/application.cpp
-    src/utility/except.cpp)
+    src/utility/except.cpp
+    src/model/utility/object_util.cpp)
 
 add_executable(main ${SOURCES})
 target_link_libraries(main PRIVATE sfml-graphics)
