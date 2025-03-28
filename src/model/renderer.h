@@ -15,7 +15,6 @@ private:
     BufferRasterizer rasterizer_;
     std::vector<Triangle> triangle_buffer_;
     std::vector<PLSInSpace> point_light_buffer_;
-    std::vector<Vector3> normal_buffer_;
     std::vector<TriMatrix> preserved_buffer_;
 };
 

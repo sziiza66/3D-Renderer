@@ -8,19 +8,6 @@ namespace Renderer3D::Kernel {
 
 namespace {
 
-void ApplyFrustumTransformationOnTriangle(const Camera& cam, Triangle* triangle) {
-    assert(triangle);
-    triangle->vertices = cam.FrustumMatrix() * triangle->vertices;
-    for (uint8_t j = 0; j < 3; ++j) {
-        for (uint8_t i = 0; i < 3; ++i) {
-            triangle->vertices(j, i) /= triangle->vertices(3, i);
-        }
-    }
-    // Вернул ручную работу вместо не inplace'ного
-    // triangle->vertices = triangle->vertices.colwise().hnormalized().colwise().homogeneous();
-    // т.к. Eigen не предоставляет способа применять кастомные функции Col-wise.
-}
-
 void ClipTriangleCase1(double near_dist, VertexRef outside_vertex1, VertexRef outside_vertex2,
                        VertexRef inside_vertex) {
     // Этот ассёрт не должен в теории никогда срабатывать, но пусть будет.
@@ -135,7 +122,7 @@ void FetchAndTransformData(const std::vector<SubObject>& objects, std::vector<Tr
     assert(triangles);
     assert(point_lights);
     // Тут и не нужен был костыль в качестве ind = 0 дефолтного аргумента функции, я просто затупил.
-    size_t ind = triangles->size();
+    size_t ind_tri = triangles->size();
     size_t ind_pls = point_lights->size();
     for (const SubObject& sobj : objects) {
         for (const Triangle& triangle : sobj.obj.Triangles()) {
@@ -145,8 +132,9 @@ void FetchAndTransformData(const std::vector<SubObject>& objects, std::vector<Tr
             point_lights->emplace_back(pls);
         }
         FetchAndTransformData(sobj.obj.Subobjects(), triangles, point_lights);
-        for (; ind < triangles->size(); ++ind) {
-            (*triangles)[ind].vertices = sobj.pos * (*triangles)[ind].vertices;
+        for (; ind_tri < triangles->size(); ++ind_tri) {
+            (*triangles)[ind_tri].vertices = sobj.pos * (*triangles)[ind_tri].vertices;
+            (*triangles)[ind_tri].vertex_normals = sobj.pos.rotation() * (*triangles)[ind_tri].vertex_normals;
         }
         for (; ind_pls < point_lights->size(); ++ind_pls) {
             (*point_lights)[ind_pls].position += sobj.pos.translation();
@@ -160,7 +148,6 @@ Frame Renderer::RenderFrame(const std::vector<SubObject>& objects, const AffineT
                             const Camera& camera, const Color& ambient_light, Frame&& frame) {
     triangle_buffer_.clear();
     point_light_buffer_.clear();
-    normal_buffer_.clear();
     preserved_buffer_.clear();
     // Да, эта функция либо через цикл, либо внутри с костылём. Единственный вариант -- изменить class World, но там
     // просто логически бред получится: в таком случае мир -- это либо бертка над единственным объектом класса Object,
@@ -173,32 +160,24 @@ Frame Renderer::RenderFrame(const std::vector<SubObject>& objects, const AffineT
 
     for (Triangle& triangle : triangle_buffer_) {
         triangle.vertices = transformation_to_camera_space * triangle.vertices;
+        triangle.vertex_normals = transformation_to_camera_space.rotation() * triangle.vertex_normals;
     }
     for (PLSInSpace& pls : point_light_buffer_) {
         pls.position += transformation_to_camera_space.translation();
     }
 
-    // Clipping
+    // Clipping // надо переделать нормали
     triangle_buffer_ = ClipAgainstZAxis(camera.NearDistance(), std::move(triangle_buffer_));
 
-    // Calculating normals, temporary solution.
-    for (const Triangle& triangle : triangle_buffer_) {
-        Vector3 v1 = triangle.vertices.col(1).head(3) - triangle.vertices.col(0).head(3);
-        Vector3 v2 = triangle.vertices.col(2).head(3) - triangle.vertices.col(0).head(3);
-        normal_buffer_.emplace_back(v1.cross(v2).normalized());
-        // std::cout << v1.cross(v2).normalized() << "\n\n";
-    }
+    // for (const Triangle& triangle : triangle_buffer_) {
+    //     preserved_buffer_.emplace_back(triangle.vertices);
+    // }
 
-    for (const Triangle& triangle : triangle_buffer_) {
-        preserved_buffer_.emplace_back(triangle.vertices);
-    }
+    // for (Triangle& triangle : triangle_buffer_) {
+    //     ApplyFrustumTransformationOnTriangle(camera, &triangle);
+    // }
 
-    for (Triangle& triangle : triangle_buffer_) {
-        ApplyFrustumTransformationOnTriangle(camera, &triangle);
-    }
-
-    return rasterizer_.MakeFrame(triangle_buffer_, preserved_buffer_, point_light_buffer_, normal_buffer_,
-                                 ambient_light, std::move(frame));
+    return rasterizer_.MakeFrame(triangle_buffer_, point_light_buffer_, ambient_light, camera, std::move(frame));
 }
 
 }  // namespace Renderer3D::Kernel

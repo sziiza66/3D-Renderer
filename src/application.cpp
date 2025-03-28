@@ -71,7 +71,8 @@ Application::World Application::PopulateWorld() {
     //             Color{1, 0, 0});
     // Triangle t2(TriMatrix{{0, 1, 0}, {0, 0, 1}, {0, 0, 0}, {1, 1, 1}}, Matrix3::Identity(), Color{0, 1, 0});
     // Triangle t3(TriMatrix{{0.4, 0.5, 0}, {1, -1, 0}, {1, 0.5, -4}, {1, 1, 1}}, Matrix3::Identity(), Color{0, 0, 1});
-    Triangle t(TriMatrix{{0, 0, 0}, {10, 0, -10}, {0, -10, 10}, {1, 1, 1}}, Matrix3::Identity(), Color{0.5, 0.5, 0.5});
+    Triangle t(TriMatrix{{0, 0, 0}, {10, 0, -10}, {0, -10, 10}, {1, 1, 1}}, Matrix3{{-1, -1, -1}, {0, 0, 0}, {0, 0, 0}},
+               Color{0.5, 0.5, 0.5});
 
     Kernel::PointLightSource light({2, 2, 2}, 0, -2, 5);
     Object lamp;
