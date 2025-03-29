@@ -10,15 +10,15 @@ ssize_t MakeAtLeastOne(ssize_t sz) {
 
 }  // namespace
 
-Frame::Frame(enum UHeight height, enum UWidth width)
+Frame::Frame(enum SHeight height, enum SWidth width)
     : data_(MakeAtLeastOne(height) * MakeAtLeastOne(width)), width_(MakeAtLeastOne(width)) {
 }
 
-DiscreteColor& Frame::operator()(size_t x, size_t y) {
+DiscreteColor& Frame::operator()(ssize_t x, ssize_t y) {
     return data_[x * width_ + y].color;
 }
 
-const DiscreteColor& Frame::operator()(size_t x, size_t y) const {
+const DiscreteColor& Frame::operator()(ssize_t x, ssize_t y) const {
     return data_[x * width_ + y].color;
 }
 

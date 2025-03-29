@@ -18,16 +18,16 @@ class Frame {
     };
 
 public:
-    // Приписка U нужна, чтобы компилятор не путал енамы с функциями Height и Width, хотя я могу в некоторых случаях
+    // Приписка S нужна, чтобы компилятор не путал енамы с функциями Height и Width, хотя я могу в некоторых случаях
     // обозначить перед именем енама 'enum', и это помогает, но это работает не во всех случаях.
-    enum UWidth : size_t;
-    enum UHeight : size_t;
+    enum SWidth : ssize_t;
+    enum SHeight : ssize_t;
 
     Frame() = default;
-    Frame(UHeight height, UWidth width);
+    Frame(SHeight height, SWidth width);
 
-    DiscreteColor& operator()(size_t x, size_t y);
-    const DiscreteColor& operator()(size_t x, size_t y) const;
+    DiscreteColor& operator()(ssize_t x, ssize_t y);
+    const DiscreteColor& operator()(ssize_t x, ssize_t y) const;
 
     void FillWithBlackColor();
     [[nodiscard]] size_t Height() const;

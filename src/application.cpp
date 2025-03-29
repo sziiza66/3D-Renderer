@@ -7,7 +7,7 @@ namespace Renderer3D {
 Application::Application()
     : spectator_(kDefaultWindowWidth * 1.0 / kDefaultWindowHeight, kSpectatorMovementSpeed),
       window_(sf::VideoMode(kDefaultWindowWidth, kDefaultWindowHeight), kWindowName),
-      frame_(Frame::UHeight{kDefaultWindowHeight}, Frame::UWidth{kDefaultWindowWidth}),
+      frame_(Frame::SHeight{kDefaultWindowHeight}, Frame::SWidth{kDefaultWindowWidth}),
       world_(PopulateWorld()) {
 }
 
@@ -68,27 +68,14 @@ void Application::HandleLoopIteration(const sf::Sprite& sprite, sf::Texture* tex
 Application::World Application::PopulateWorld() {
     World ret;
 
-    // Object obj;
-    // Triangle t1(TriMatrix{{0, 0.5, -0.5}, {0, 0.5, 0.5}, {0, 0.5, -0.5}, {1, 1, 1}}, Matrix3::Identity(),
-    //             Color{1, 0, 0});
-    // Triangle t2(TriMatrix{{0, 1, 0}, {0, 0, 1}, {0, 0, 0}, {1, 1, 1}}, Matrix3::Identity(), Color{0, 1, 0});
-    // Triangle t3(TriMatrix{{0.4, 0.5, 0}, {1, -1, 0}, {1, 0.5, -4}, {1, 1, 1}}, Matrix3::Identity(), Color{0, 0, 1});
-    Triangle t(TriMatrix{{0, 0, 0}, {10, 0, -10}, {0, -10, 10}, {1, 1, 1}}, Matrix3{{-1, -1, -1}, {0, 0, 0}, {0, 0, 0}},
-               Color{0.5, 0.5, 0.5});
-
     Kernel::PointLightSource light({10, 8, 10}, 0, -3, 0.1);
     Object lamp;
     lamp.PushPointLightSource(light);
     AffineTransform lamp_pos = AffineTransform::Identity();
-    lamp_pos.translation() += Vector3{20, 0, 0};
-
-    // obj.PushTriangle(t1);
-    // obj.PushTriangle(t2);
-    // obj.PushTriangle(t3);
-    // Object obj;
-    // obj.PushTriangle(t);
-    // ret.PushObject(AffineTransform::Identity(), std::move(obj));
-    ret.PushObject(AffineTransform::Identity(), std::move(Kernel::CreateOctahedron(10, {0.5, 0.5, 1})));
+    lamp_pos.translation() += Vector3{20, 0, 20};
+    AffineTransform pos = AffineTransform::Identity();
+    pos.translation() += Vector3{0, 0, 20};
+    ret.PushObject(pos, std::move(Kernel::CreateOctahedron(10, {0.5, 0.5, 1})));
     ret.PushObject(lamp_pos, std::move(lamp));
     lamp_pos.translation() -= Vector3{40, 0, 0};
     Object lamp2;

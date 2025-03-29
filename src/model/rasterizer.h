@@ -7,12 +7,21 @@
 
 namespace Renderer3D::Kernel {
 
+// Сократил название, иначе оно огромное.
+// Эта структура не испльзуется нигде, кроме растеризации и рендеринга, поэтому я решил её оставить тут.
+struct PLSInSpace {
+    PointLightSource source_data;
+    Vector3 position = {0, 0, 0};
+};
+
 class BufferRasterizer {
 public:
     Frame MakeFrame(const std::vector<Triangle>& triangles, const std::vector<PLSInSpace>& pls, const Color& ambient,
                     const Camera& camera, Frame&& frame);
 
 private:
+    // Думаю, стоит добавить также буфер нормалей и точек, таким образом вычисление цвета пикселя будет проиходить не
+    // больше чем Height*Width раз за кадр, если треугльников много, это должно быть значительным.
     ZBuffer z_buffer_;
 };
 

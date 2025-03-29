@@ -2,9 +2,6 @@
 
 #include <cassert>
 
-#include <iomanip>
-#include <iostream>
-
 #include "zbuffer.h"
 
 namespace Renderer3D::Kernel {
@@ -43,9 +40,9 @@ DiscreteColor CalculateColorOfPizxel(const Color& diffuse_color, const Color& am
     Color ret = diffuse_color;
     Color modulator = ambient;
     for (const PLSInSpace& pl : pls) {
-        double dotprod = std::abs(normal.dot((point - pl.position).normalized()));
-        modulator += (dotprod > 0 ? dotprod : 0) *
-                     CalculateLightIntensityColor(pl.source_data, (point - pl.position).squaredNorm());
+        Vector3 distance_vector = point - pl.position;
+        double dotprod = std::abs(normal.dot(distance_vector.normalized()));
+        modulator += dotprod * CalculateLightIntensityColor(pl.source_data, distance_vector.squaredNorm());
     }
     return MakeDiscrete(ret * modulator);
 }
@@ -116,6 +113,7 @@ void FillLowerTriangle(const Color& diffuse_color, const Color& ambient, const s
             continue;
         }
 
+        // Я знаю, как избавиться от всех операций деления в этой функции, но пока оставлю так.
         // Интерполяция аттрибутов
         // --------------------
         // x, y, z координаты
@@ -177,6 +175,7 @@ void FillUpperTriangle(const Color& diffuse_color, const Color& ambient, const s
             continue;
         }
 
+        // Я знаю, как избавиться от всех операций деления в этой функции, но пока оставлю так.
         // Интерполяция аттрибутов
         // --------------------
         // x, y, z координаты
@@ -304,7 +303,6 @@ TriMatrix ApplyFrustumTransformationOnTriangle(const Triangle& triangle, const C
 
 Frame BufferRasterizer::MakeFrame(const std::vector<Triangle>& triangles, const std::vector<PLSInSpace>& pls,
                                   const Color& ambient, const Camera& camera, Frame&& frame) {
-    // std::cout << std::setprecision(18) << std::fixed;
     Frame ret(std::move(frame));
     z_buffer_.FitTo(ret);
     ret.FillWithBlackColor();

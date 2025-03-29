@@ -12,10 +12,4 @@ struct PointLightSource {
     double k_quadr = 0;
 };
 
-// Сократил название, иначе оно огромное.
-struct PLSInSpace {
-    PointLightSource source_data;
-    Vector3 position = {0, 0, 0};
-};
-
 }  // namespace Renderer3D::Kernel
