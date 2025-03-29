@@ -1,6 +1,9 @@
 #include "application.h"
 
+#include <fstream>
+
 #include "model/utility/object_util.h"
+#include "model/utility/simple_obj_parse.h"
 
 namespace Renderer3D {
 
@@ -68,21 +71,34 @@ void Application::HandleLoopIteration(const sf::Sprite& sprite, sf::Texture* tex
 Application::World Application::PopulateWorld() {
     World ret;
 
-    Kernel::PointLightSource light({10, 8, 10}, 0, -3, 0.1);
+    // PointLightSource light({10, 8, 10}, 0, -3, 0.1);
+    // Object lamp;
+    // lamp.PushPointLightSource(light);
+    // AffineTransform lamp_pos = AffineTransform::Identity();
+    // lamp_pos.translation() += Vector3{20, 0, 20};
+    // AffineTransform pos = AffineTransform::Identity();
+    // pos.translation() += Vector3{0, 0, 20};
+    // ret.PushObject(pos, std::move(Kernel::CreateOctahedron(10, {0.5, 0.5, 1})));
+    // ret.PushObject(lamp_pos, std::move(lamp));
+    // lamp_pos.translation() -= Vector3{40, 0, 0};
+    // Object lamp2;
+    // PointLightSource light2({2, 4, 2}, 0, -3, 0.1);
+    // lamp2.PushPointLightSource(light2);
+    // ret.PushObject(lamp_pos, std::move(lamp2));
+
+    PointLightSource light({1, 0.8, 1}, 0, 0.005, 0.01);
     Object lamp;
     lamp.PushPointLightSource(light);
     AffineTransform lamp_pos = AffineTransform::Identity();
-    lamp_pos.translation() += Vector3{20, 0, 20};
-    AffineTransform pos = AffineTransform::Identity();
-    pos.translation() += Vector3{0, 0, 20};
-    ret.PushObject(pos, std::move(Kernel::CreateOctahedron(10, {0.5, 0.5, 1})));
-    ret.PushObject(lamp_pos, std::move(lamp));
-    lamp_pos.translation() -= Vector3{40, 0, 0};
-    Object lamp2;
-    Kernel::PointLightSource light2({2, 4, 2}, 0, -3, 0.1);
-    lamp2.PushPointLightSource(light2);
-    ret.PushObject(lamp_pos, std::move(lamp2));
+    lamp_pos.translation() += Vector3{3, -10, 45};
 
+    std::ifstream file_obj("name.obj");
+    Object obj = Kernel::ParseObj(file_obj, 100);
+    AffineTransform obj_pos = AffineTransform::Identity();
+    obj_pos.translation() += Vector3{0, 0, 20};
+
+    ret.PushObject(lamp_pos, std::move(lamp));
+    ret.PushObject(obj_pos, std::move(obj));
     return ret;
 }
 

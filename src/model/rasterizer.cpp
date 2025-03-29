@@ -1,6 +1,7 @@
 #include "rasterizer.h"
 
 #include <cassert>
+#include <iostream>
 
 #include "zbuffer.h"
 
@@ -301,6 +302,8 @@ TriMatrix ApplyFrustumTransformationOnTriangle(const Triangle& triangle, const C
 
 }  // namespace
 
+size_t fcnt = 0;
+
 Frame BufferRasterizer::MakeFrame(const std::vector<Triangle>& triangles, const std::vector<PLSInSpace>& pls,
                                   const Color& ambient, const Camera& camera, Frame&& frame) {
     Frame ret(std::move(frame));
@@ -311,6 +314,7 @@ Frame BufferRasterizer::MakeFrame(const std::vector<Triangle>& triangles, const 
         TriMatrix projected_vertices = ApplyFrustumTransformationOnTriangle(triangle, camera);
         DrawTriangle(triangle, projected_vertices, pls, ambient, &ret, &z_buffer_);
     }
+    std::cout << "Frame " << fcnt++ << " rendered!\n";
     return ret;
 }
 

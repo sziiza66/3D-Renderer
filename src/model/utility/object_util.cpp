@@ -6,7 +6,6 @@ Object CreateOctahedron(double scale, const Color& color) {
     // Тупенькая функция, возвращающая октаэдр, нормали настроены так, чтобы создавать иллюзию шара, 8 граней правда
     // мало, но зато просто.
     assert(!std::isinf(scale));
-    assert(scale != 0);
 
     Object ret;
     for (uint8_t i = 0; i < 8; ++i) {
