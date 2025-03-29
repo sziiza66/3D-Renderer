@@ -90,7 +90,7 @@ Application::World Application::PopulateWorld() {
     Object lamp;
     lamp.PushPointLightSource(light);
     AffineTransform lamp_pos = AffineTransform::Identity();
-    lamp_pos.translation() += Vector3{3, -10, 45};
+    lamp_pos.translation() += Vector3{3, 10, 45};
 
     std::ifstream file_obj("name.obj");
     Object obj = Kernel::ParseObj(file_obj, 100);

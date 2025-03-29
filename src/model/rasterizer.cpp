@@ -1,7 +1,6 @@
 #include "rasterizer.h"
 
 #include <cassert>
-#include <iostream>
 
 #include "zbuffer.h"
 
@@ -42,8 +41,9 @@ DiscreteColor CalculateColorOfPizxel(const Color& diffuse_color, const Color& am
     Color modulator = ambient;
     for (const PLSInSpace& pl : pls) {
         Vector3 distance_vector = point - pl.position;
-        double dotprod = std::abs(normal.dot(distance_vector.normalized()));
-        modulator += dotprod * CalculateLightIntensityColor(pl.source_data, distance_vector.squaredNorm());
+        double dotprod = normal.dot(distance_vector.normalized());
+        modulator +=
+            (dotprod > 0 ? dotprod : 0) * CalculateLightIntensityColor(pl.source_data, distance_vector.squaredNorm());
     }
     return MakeDiscrete(ret * modulator);
 }
@@ -314,7 +314,6 @@ Frame BufferRasterizer::MakeFrame(const std::vector<Triangle>& triangles, const 
         TriMatrix projected_vertices = ApplyFrustumTransformationOnTriangle(triangle, camera);
         DrawTriangle(triangle, projected_vertices, pls, ambient, &ret, &z_buffer_);
     }
-    std::cout << "Frame " << fcnt++ << " rendered!\n";
     return ret;
 }
 
