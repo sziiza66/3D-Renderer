@@ -88,7 +88,7 @@ Application::World Application::PopulateWorld() {
     // Object obj;
     // obj.PushTriangle(t);
     // ret.PushObject(AffineTransform::Identity(), std::move(obj));
-    ret.PushObject(AffineTransform::Identity(), std::move(Kernel::CreateBall(10, {0.5, 0.5, 1})));
+    ret.PushObject(AffineTransform::Identity(), std::move(Kernel::CreateOctahedron(10, {0.5, 0.5, 1})));
     ret.PushObject(lamp_pos, std::move(lamp));
     lamp_pos.translation() -= Vector3{40, 0, 0};
     Object lamp2;

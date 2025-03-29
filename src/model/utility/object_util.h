@@ -4,6 +4,6 @@
 
 namespace Renderer3D::Kernel {
 
-Object CreateBall(double scale, const Color& color);
+Object CreateOctahedron(double scale, const Color& color);
 
 }  // namespace Renderer3D::Kernel

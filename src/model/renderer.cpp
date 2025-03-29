@@ -2,21 +2,37 @@
 
 #include <cassert>
 
-#include <iostream>
-
 namespace Renderer3D::Kernel {
 
 namespace {
 
-void ClipTriangleCase1(double near_dist, VertexRef outside_vertex1, VertexRef outside_vertex2,
-                       VertexRef inside_vertex) {
+void ClipTriangleCase1(double near_dist, int8_t outside_vertex_ind1, int8_t outside_vertex_ind2,
+                       int8_t inside_vertex_ind, Triangle* triangle) {
+    assert(triangle);
+    assert(outside_vertex_ind1 >= 0 && outside_vertex_ind1 < 3);
+    assert(outside_vertex_ind2 >= 0 && outside_vertex_ind2 < 3);
+    assert(inside_vertex_ind >= 0 && inside_vertex_ind < 3);
+
+    VertexRef outside_vertex1 = triangle->vertices.col(outside_vertex_ind1);
+    VertexRef outside_vertex2 = triangle->vertices.col(outside_vertex_ind2);
+    VertexRef inside_vertex = triangle->vertices.col(inside_vertex_ind);
+    NormalRef outside_normal1 = triangle->vertex_normals.col(outside_vertex_ind1);
+    NormalRef outside_normal2 = triangle->vertex_normals.col(outside_vertex_ind2);
+    NormalRef inside_normal = triangle->vertex_normals.col(inside_vertex_ind);
+
     // Этот ассёрт не должен в теории никогда срабатывать, но пусть будет.
     assert(outside_vertex1(2) - inside_vertex(2) != 0);
+
+    outside_normal1 = inside_normal + (outside_normal1 - inside_normal) * (near_dist - inside_vertex(2)) /
+                                          (outside_vertex1(2) - inside_vertex(2));
 
     outside_vertex1 = inside_vertex + (outside_vertex1 - inside_vertex) * (near_dist - inside_vertex(2)) /
                                           (outside_vertex1(2) - inside_vertex(2));
     // Этот ассёрт не должен в теории никогда срабатывать, но пусть будет.
     assert(outside_vertex2(2) - inside_vertex(2) != 0);
+
+    outside_normal2 = inside_normal + (outside_normal2 - inside_normal) * (near_dist - inside_vertex(2)) /
+                                          (outside_vertex2(2) - inside_vertex(2));
 
     outside_vertex2 = inside_vertex + (outside_vertex2 - inside_vertex) * (near_dist - inside_vertex(2)) /
                                           (outside_vertex2(2) - inside_vertex(2));
@@ -24,22 +40,27 @@ void ClipTriangleCase1(double near_dist, VertexRef outside_vertex1, VertexRef ou
     outside_vertex2(2) = near_dist;
 }
 
-void ClipTriangleCase2(double near_dist, int8_t outside_vertex_ind, int8_t inside_vertex1_ind,
-                       int8_t inside_vertex2_ind, Triangle* triangle, std::vector<Triangle>* triangles) {
-    assert(triangles);
+Triangle ClipTriangleCase2(double near_dist, int8_t outside_vertex_ind, int8_t inside_vertex_ind1,
+                           int8_t inside_vertex_ind2, Triangle* triangle) {
     assert(triangle);
     assert(outside_vertex_ind >= 0 && outside_vertex_ind < 3);
-    assert(inside_vertex1_ind >= 0 && inside_vertex1_ind < 3);
-    assert(inside_vertex2_ind >= 0 && inside_vertex2_ind < 3);
+    assert(inside_vertex_ind1 >= 0 && inside_vertex_ind1 < 3);
+    assert(inside_vertex_ind2 >= 0 && inside_vertex_ind2 < 3);
     // Этот ассёрт не должен в теории никогда срабатывать, но пусть будет.
 
     // Обработка первого треугольника
     VertexRef outside_vertex(triangle->vertices.col(outside_vertex_ind));
-    VertexRef inside_vertex1(triangle->vertices.col(inside_vertex1_ind));
+    VertexRef inside_vertex1(triangle->vertices.col(inside_vertex_ind1));
+    NormalRef outside_normal(triangle->vertex_normals.col(outside_vertex_ind));
+    NormalRef inside_normal1(triangle->vertex_normals.col(inside_vertex_ind1));
 
     assert(outside_vertex(2) - inside_vertex1(2) != 0);
 
     Vector4 outside_vertex_cpy = outside_vertex;
+    Vector3 outside_normal_cpy = outside_normal;
+
+    outside_normal = inside_normal1 + (outside_normal_cpy - inside_normal1) * (near_dist - inside_vertex1(2)) /
+                                          (outside_vertex_cpy(2) - inside_vertex1(2));
 
     outside_vertex = inside_vertex1 + (outside_vertex_cpy - inside_vertex1) * (near_dist - inside_vertex1(2)) /
                                           (outside_vertex_cpy(2) - inside_vertex1(2));
@@ -47,23 +68,36 @@ void ClipTriangleCase2(double near_dist, int8_t outside_vertex_ind, int8_t insid
     outside_vertex(2) = near_dist;
 
     // Обработка второго треугольника
-    triangles->emplace_back(*triangle);
+    Triangle ret = *triangle;
 
-    VertexRef outside_vertex_t2(triangles->back().vertices.col(outside_vertex_ind));
-    VertexRef inside_vertex1_t2(triangles->back().vertices.col(inside_vertex1_ind));
-    VertexRef inside_vertex2_t2(triangles->back().vertices.col(inside_vertex2_ind));
+    VertexRef outside_vertex_t2(ret.vertices.col(outside_vertex_ind));
+    VertexRef inside_vertex1_t2(ret.vertices.col(inside_vertex_ind1));
+    VertexRef inside_vertex2_t2(ret.vertices.col(inside_vertex_ind2));
+    NormalRef outside_normal_t2(ret.vertex_normals.col(outside_vertex_ind));
+    NormalRef inside_normal1_t2(ret.vertex_normals.col(inside_vertex_ind1));
+    NormalRef inside_normal2_t2(ret.vertex_normals.col(inside_vertex_ind2));
 
     // Этот ассёрт не должен в теории никогда срабатывать, но пусть будет.
     assert(outside_vertex_cpy(2) - inside_vertex2_t2(2) != 0);
 
+    inside_normal1_t2 = inside_normal2_t2 + (outside_normal_cpy - inside_normal2_t2) *
+                                                (near_dist - inside_vertex2_t2(2)) /
+                                                (outside_vertex_cpy(2) - inside_vertex2_t2(2));
+
     inside_vertex1_t2 = inside_vertex2_t2 + (outside_vertex_cpy - inside_vertex2_t2) *
                                                 (near_dist - inside_vertex2_t2(2)) /
                                                 (outside_vertex_cpy(2) - inside_vertex2_t2(2));
-    Vector4 temp = inside_vertex1_t2;
+    Vector4 temp_vertex = inside_vertex1_t2;
     inside_vertex1_t2 = inside_vertex2_t2;
-    inside_vertex2_t2 = temp;
+    inside_vertex2_t2 = temp_vertex;
+
+    Vector3 temp_normal = inside_normal1_t2;
+    inside_normal1_t2 = inside_normal2_t2;
+    inside_normal2_t2 = temp_normal;
 
     assert(outside_vertex_t2(2) == near_dist);
+
+    return ret;
 }
 
 std::vector<Triangle> ClipAgainstZAxis(double near_dist, std::vector<Triangle>&& triangles) {
@@ -101,8 +135,7 @@ std::vector<Triangle> ClipAgainstZAxis(double near_dist, std::vector<Triangle>&&
         // Случай 1
         if (outside_vertex_ind1 != -1 && outside_vertex_ind2 != -1) {
             assert(inside_vertex_ind2 != -1);
-            ClipTriangleCase1(near_dist, ret[i].vertices.col(outside_vertex_ind1),
-                              ret[i].vertices.col(outside_vertex_ind2), ret[i].vertices.col(inside_vertex_ind2));
+            ClipTriangleCase1(near_dist, outside_vertex_ind1, outside_vertex_ind2, inside_vertex_ind2, &ret[i]);
             continue;
         }
         // Случай 2
@@ -112,7 +145,8 @@ std::vector<Triangle> ClipAgainstZAxis(double near_dist, std::vector<Triangle>&&
         // функций мувают в себя данные, другие принимают указатель, надеюсь это не так плохо. В целом, переписать всё
         // на передачу указателей очень просто, а вот сделать везде мувы меня как-то жаба душит, речь в основном про
         // реккурсивные функции FetchTriangles, как будто плодить там новые объекты потенциальн не очень.
-        ClipTriangleCase2(near_dist, outside_vertex_ind2, inside_vertex_ind1, inside_vertex_ind2, &ret[i], &ret);
+        ret.emplace_back(
+            ClipTriangleCase2(near_dist, outside_vertex_ind2, inside_vertex_ind1, inside_vertex_ind2, &ret[i]));
     }
     return ret;
 }
@@ -168,14 +202,6 @@ Frame Renderer::RenderFrame(const std::vector<SubObject>& objects, const AffineT
 
     // Clipping // надо переделать нормали
     triangle_buffer_ = ClipAgainstZAxis(camera.NearDistance(), std::move(triangle_buffer_));
-
-    // for (const Triangle& triangle : triangle_buffer_) {
-    //     preserved_buffer_.emplace_back(triangle.vertices);
-    // }
-
-    // for (Triangle& triangle : triangle_buffer_) {
-    //     ApplyFrustumTransformationOnTriangle(camera, &triangle);
-    // }
 
     return rasterizer_.MakeFrame(triangle_buffer_, point_light_buffer_, ambient_light, camera, std::move(frame));
 }
