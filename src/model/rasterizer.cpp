@@ -40,7 +40,7 @@ DiscreteColor CalculateColorOfPizxel(const Color& diffuse_color, const Color& am
     Color ret = diffuse_color;
     Color modulator = ambient;
     for (const PLSInSpace& pl : pls) {
-        Vector3 distance_vector = point - pl.position;
+        Vector3 distance_vector = pl.position - point;
         double dotprod = normal.dot(distance_vector.normalized());
         modulator +=
             (dotprod > 0 ? dotprod : 0) * CalculateLightIntensityColor(pl.source_data, distance_vector.squaredNorm());
@@ -215,7 +215,7 @@ void FillUpperTriangle(const Color& diffuse_color, const Color& ambient, const s
     }
 }
 
-void DrawTriangle(const Triangle& triangle, TriMatrix projected_vertices, const std::vector<PLSInSpace>& pls,
+void DrawTriangle(const Triangle& triangle, const TriMatrix& projected_vertices, const std::vector<PLSInSpace>& pls,
                   const Color& ambient, Frame* frame, ZBuffer* z_buffer_) {
     // Eigen::Block'и вершин треугольника, отсортированные по Ox.
     auto [lowest_proj, middle_proj, highest_proj, lowest, middle, highest, lowest_norm, middle_norm, highest_norm] =
@@ -301,8 +301,6 @@ TriMatrix ApplyFrustumTransformationOnTriangle(const Triangle& triangle, const C
 }
 
 }  // namespace
-
-size_t fcnt = 0;
 
 Frame BufferRasterizer::MakeFrame(const std::vector<Triangle>& triangles, const std::vector<PLSInSpace>& pls,
                                   const Color& ambient, const Camera& camera, Frame&& frame) {

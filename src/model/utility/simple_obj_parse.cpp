@@ -4,8 +4,8 @@ namespace Renderer3D::Kernel {
 
 namespace {
 
-std::array<ssize_t, 3> ParseIndexes(const std::string& srt) {
-    std::array<ssize_t, 3> ret = {0, 0, 0};
+std::array<size_t, 3> ParseIndexes(const std::string& srt) {
+    std::array<size_t, 3> ret = {0, 0, 0};
     uint8_t ind = 0;
     for (char c : srt) {
         if (ind > 2) {
@@ -22,7 +22,7 @@ std::array<ssize_t, 3> ParseIndexes(const std::string& srt) {
 
 }  // namespace
 
-Object ParseObj(std::ifstream& file, double scale) {
+Object ParseObj(std::ifstream& file, const Color& diffuse_reflection_color, double scale) {
     // Может парсить определенное подмножество .obj файлов, достает треугольники с их нрмалями.
     // Наличие других полигонов кроме треугольников приведёт преждевременному завершению функции, объект прочитается не
     // полностью и может быть кривым.
@@ -46,7 +46,7 @@ Object ParseObj(std::ifstream& file, double scale) {
             // v/vt/vn
             std::string vertex_info;
             Triangle new_triangle;
-            new_triangle.diffuse_reflection_color = {1, 1, 1};
+            new_triangle.diffuse_reflection_color = diffuse_reflection_color;
             for (uint8_t i = 0; i < 3; ++i) {
                 file >> vertex_info;
                 auto indexes = ParseIndexes(vertex_info);
@@ -58,10 +58,10 @@ Object ParseObj(std::ifstream& file, double scale) {
                 if (indexes[2] > 0 && indexes[2] <= normals.size()) {
                     new_triangle.vertex_normals.col(i) = normals[indexes[2] - 1];
                 } else {
-                    new_triangle.vertex_normals.col(i) = Vector3::UnitZ();
+                    new_triangle.vertex_normals.col(i) = Vector3{0, 0, 0};
                 }
-                ret.PushTriangle(new_triangle);
             }
+            ret.PushTriangle(new_triangle);
         } else {
             continue;
         }

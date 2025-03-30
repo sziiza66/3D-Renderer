@@ -16,7 +16,7 @@ public:
     [[nodiscard]] const Color& AmbientLight() const;
 
 private:
-    constexpr static Color kDefaultAmbient = {0.05, 0.05, 0.05};
+    constexpr static Color kDefaultAmbient = {0.1, 0.1, 0.1};
 
 private:
     std::vector<SubObject> objects_;

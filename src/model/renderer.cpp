@@ -189,7 +189,6 @@ Frame Renderer::RenderFrame(const std::vector<SubObject>& objects, const AffineT
     for (PLSInSpace& pls : point_light_buffer_) {
         pls.position = transformation_to_camera_space * pls.position;
     }
-
     // Clipping
     triangle_buffer_ = ClipAgainstZAxis(camera.NearDistance(), std::move(triangle_buffer_));
 
