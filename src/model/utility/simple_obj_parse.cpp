@@ -22,7 +22,8 @@ std::array<size_t, 3> ParseIndexes(const std::string& srt) {
 
 }  // namespace
 
-Object ParseObj(std::ifstream& file, const Color& diffuse_reflection_color, double scale) {
+Object ParseObj(std::ifstream& file, const Color& diffuse_reflection_color, const Color& specular_reflection_color,
+                uint32_t specular_power, double scale) {
     // Может парсить определенное подмножество .obj файлов, достает треугольники с их нрмалями.
     // Наличие других полигонов кроме треугольников приведёт преждевременному завершению функции, объект прочитается не
     // полностью и может быть кривым.
@@ -47,6 +48,8 @@ Object ParseObj(std::ifstream& file, const Color& diffuse_reflection_color, doub
             std::string vertex_info;
             Triangle new_triangle;
             new_triangle.diffuse_reflection_color = diffuse_reflection_color;
+            new_triangle.specular_reflection_color = specular_reflection_color;
+            new_triangle.specular_power = specular_power;
             for (uint8_t i = 0; i < 3; ++i) {
                 file >> vertex_info;
                 auto indexes = ParseIndexes(vertex_info);

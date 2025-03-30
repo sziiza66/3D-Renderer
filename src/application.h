@@ -47,8 +47,8 @@ private:
     static void HandleTurnLeft(Spectator* spectator);
 
 private:
-    static constexpr size_t kDefaultWindowWidth = 1800;
-    static constexpr size_t kDefaultWindowHeight = 900;
+    static constexpr size_t kDefaultWindowWidth = 1920;
+    static constexpr size_t kDefaultWindowHeight = 1080;
     static constexpr double kSpectatorMovementSpeed = 0.2;
     static constexpr const char* kWindowName = "3D Renderer";
     // Моя попытка сделать обработку клавиш компактной и легко модифицируемой, если у этого варианта есть минусы, или

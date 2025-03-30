@@ -1,6 +1,7 @@
 #include "rasterizer.h"
 
 #include <cassert>
+#include <cmath>
 
 #include "zbuffer.h"
 
@@ -23,29 +24,46 @@ auto GetVerticalOrderOfVerticesAndAttributes(const TriMatrix& projected_vertices
         std::swap(ret[1], ret[0]);
     }
     // Ужас
-    return std::tuple<ConstVertexRef, ConstVertexRef, ConstVertexRef, Vector3, Vector3, Vector3, Vector3, Vector3,
-                      Vector3>{projected_vertices.col(ret[0]),        projected_vertices.col(ret[1]),
-                               projected_vertices.col(ret[2]),        triangle.vertices.col(ret[0]).head(3),
-                               triangle.vertices.col(ret[1]).head(3), triangle.vertices.col(ret[2]).head(3),
-                               triangle.vertex_normals.col(ret[0]),   triangle.vertex_normals.col(ret[1]),
-                               triangle.vertex_normals.col(ret[2])};
+    return std::tuple<Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3>{
+        projected_vertices.col(ret[0]).head(3), projected_vertices.col(ret[1]).head(3),
+        projected_vertices.col(ret[2]).head(3), triangle.vertices.col(ret[0]).head(3),
+        triangle.vertices.col(ret[1]).head(3),  triangle.vertices.col(ret[2]).head(3),
+        triangle.vertex_normals.col(ret[0]),    triangle.vertex_normals.col(ret[1]),
+        triangle.vertex_normals.col(ret[2])};
 }
 
-Color CalculateLightIntensityColor(const PointLightSource& source, double d2) {
+double ApplyBinPow(double x, uint32_t pow) {
+    double ret = 1;
+    do {
+        ret *= (pow & 1 ? x : 1);
+        pow >>= 1;
+        ret *= (pow ? ret : 1);
+    } while (pow);
+    return ret;
+}
+
+Color CalculatePointLightIntensityColor(const PointLightSource& source, double d2) {
+    assert(source.k_const + source.k_linear * std::sqrt(d2) + source.k_quadr * d2 != 0);
     return source.color / (std::abs(source.k_const + source.k_linear * std::sqrt(d2) + source.k_quadr * d2));
 }
 
-DiscreteColor CalculateColorOfPizxel(const Color& diffuse_color, const Color& ambient,
-                                     const std::vector<PLSInSpace>& pls, const Vector3& point, const Vector3& normal) {
-    Color ret = diffuse_color;
-    Color modulator = ambient;
+DiscreteColor CalculateColorOfPizxel(const Color& diffuse_color, const Color& specular_color, const Color& ambient,
+                                     uint32_t specular_pow, const std::vector<PLSInSpace>& pls, const Vector3& point,
+                                     const Vector3& normal) {
+    Color diffuse_modulator = ambient;
+    Color specular_modulator = {0, 0, 0};
     for (const PLSInSpace& pl : pls) {
         Vector3 distance_vector = pl.position - point;
-        double dotprod = normal.dot(distance_vector.normalized());
-        modulator +=
-            (dotprod > 0 ? dotprod : 0) * CalculateLightIntensityColor(pl.source_data, distance_vector.squaredNorm());
+        double diffuse_coef = normal.dot(distance_vector.normalized());
+        diffuse_coef = (diffuse_coef > 0 ? diffuse_coef : 0);
+        Color pl_intensity = CalculatePointLightIntensityColor(pl.source_data, distance_vector.squaredNorm());
+        diffuse_modulator += diffuse_coef * pl_intensity;
+
+        double specular_coef = normal.dot((distance_vector - point).normalized());
+        specular_coef = ApplyBinPow((specular_coef > 0 ? specular_coef : 0), specular_pow);
+        specular_modulator += diffuse_coef * specular_coef * pl_intensity;
     }
-    return MakeDiscrete(ret * modulator);
+    return MakeDiscrete(diffuse_color * diffuse_modulator + specular_color * specular_modulator);
 }
 
 Vector3 InterpolatePointBack(const Vector3& interpolated_point) {
@@ -53,15 +71,11 @@ Vector3 InterpolatePointBack(const Vector3& interpolated_point) {
     return {z * interpolated_point(0), z * interpolated_point(1), z};
 }
 
-Vector3 InterpolateNormalBack(const Vector3& interpolated_normal, double z) {
-    return z * interpolated_normal;
-}
-
-void FillSegment(const Color& diffuse_color, const Color& ambient, const std::vector<PLSInSpace>& pls,
-                 const Vector3& interpolated_point1, const Vector3& interpolated_point2,
-                 const Vector3& interpolated_normal1, const Vector3& interpolated_normal2, double real_y1,
-                 double real_y2, size_t x, double real_z, double z_diff_y, double real_z_diff_y, Frame* frame,
-                 ZBuffer* z_buffer_) {
+void FillSegment(const Color& diffuse_color, const Color& specular_color, const Color& ambient, uint32_t specular_pow,
+                 const std::vector<PLSInSpace>& pls, const Vector3& interpolated_point1,
+                 const Vector3& interpolated_point2, const Vector3& interpolated_normal1,
+                 const Vector3& interpolated_normal2, double real_y1, double real_y2, size_t x, double real_z,
+                 double z_diff_y, double real_z_diff_y, Frame* frame, ZBuffer* z_buffer_) {
     Vector3 interpolated_point = interpolated_point1;
     Vector3 interpolated_point_inc = (interpolated_point2 - interpolated_point1) / (real_y2 - real_y1);
     Vector3 interpolated_normal = interpolated_normal1;
@@ -79,21 +93,22 @@ void FillSegment(const Color& diffuse_color, const Color& ambient, const std::ve
 
     size_t edge = (y2 >= frame->Width() ? frame->Width() : y2);
 
-    for (size_t y = y1; y != (y2 >= edge ? edge : y2); ++y, real_z += z_diff_y) {
+    for (size_t y = y1; y != edge; ++y, real_z += z_diff_y) {
         if (real_z < (*z_buffer_)(x, y)) {
             (*z_buffer_)(x, y) = real_z;
             Vector3 point = InterpolatePointBack(interpolated_point);
-            (*frame)(x, y) = CalculateColorOfPizxel(diffuse_color, ambient, pls, point,
-                                                    InterpolateNormalBack(interpolated_normal, point(2)));
+            (*frame)(x, y) = CalculateColorOfPizxel(diffuse_color, specular_color, ambient, specular_pow, pls, point,
+                                                    interpolated_normal * point(2));
         }
         interpolated_point += interpolated_point_inc * kSideOfTheCube / frame->Width();
         interpolated_normal += interpolated_normal_inc * kSideOfTheCube / frame->Width();
     }
 }
 
-void FillLowerTriangle(const Color& diffuse_color, const Color& ambient, const std::vector<PLSInSpace>& pls,
-                       ConstVertexRef lowest_proj, ConstVertexRef middle_proj, ConstVertexRef highest_proj,
-                       const Vector3& lowest, const Vector3& middle, const Vector3& highest, const Vector3& lowest_norm,
+void FillLowerTriangle(const Color& diffuse_color, const Color& specular_color, const Color& ambient,
+                       uint32_t specular_pow, const std::vector<PLSInSpace>& pls, const Vector3& lowest_proj,
+                       const Vector3& middle_proj, const Vector3& highest_proj, const Vector3& lowest,
+                       const Vector3& middle, const Vector3& highest, const Vector3& lowest_norm,
                        const Vector3& middle_norm, const Vector3& highest_norm, double real_z_diff_y, double z_diff_y,
                        double z_diff_x, Frame* frame, ZBuffer* z_buffer_, double* real_x, double* real_z, size_t* x,
                        double* prev_y) {
@@ -148,14 +163,16 @@ void FillLowerTriangle(const Color& diffuse_color, const Color& ambient, const s
         *prev_y = real_y1;
 
         // Рисуем этот отрезок
-        FillSegment(diffuse_color, ambient, pls, interpolated_point1, interpolated_point2, interpolated_normal1,
-                    interpolated_normal2, real_y1, real_y2, *x, *real_z, z_diff_y, real_z_diff_y, frame, z_buffer_);
+        FillSegment(diffuse_color, specular_color, ambient, specular_pow, pls, interpolated_point1, interpolated_point2,
+                    interpolated_normal1, interpolated_normal2, real_y1, real_y2, *x, *real_z, z_diff_y, real_z_diff_y,
+                    frame, z_buffer_);
     }
 }
 
-void FillUpperTriangle(const Color& diffuse_color, const Color& ambient, const std::vector<PLSInSpace>& pls,
-                       ConstVertexRef lowest_proj, ConstVertexRef middle_proj, ConstVertexRef highest_proj,
-                       const Vector3& lowest, const Vector3& middle, const Vector3& highest, const Vector3& lowest_norm,
+void FillUpperTriangle(const Color& diffuse_color, const Color& specular_color, const Color& ambient,
+                       uint32_t specular_pow, const std::vector<PLSInSpace>& pls, const Vector3& lowest_proj,
+                       const Vector3& middle_proj, const Vector3& highest_proj, const Vector3& lowest,
+                       const Vector3& middle, const Vector3& highest, const Vector3& lowest_norm,
                        const Vector3& middle_norm, const Vector3& highest_norm, double real_z_diff_y, double z_diff_y,
                        double z_diff_x, Frame* frame, ZBuffer* z_buffer_, double* real_x, double* real_z, size_t* x,
                        double* prev_y) {
@@ -210,26 +227,36 @@ void FillUpperTriangle(const Color& diffuse_color, const Color& ambient, const s
         *prev_y = real_y1;
 
         // Рисуем этот отрезок
-        FillSegment(diffuse_color, ambient, pls, interpolated_point1, interpolated_point2, interpolated_normal1,
-                    interpolated_normal2, real_y1, real_y2, *x, *real_z, z_diff_y, real_z_diff_y, frame, z_buffer_);
+        FillSegment(diffuse_color, specular_color, ambient, specular_pow, pls, interpolated_point1, interpolated_point2,
+                    interpolated_normal1, interpolated_normal2, real_y1, real_y2, *x, *real_z, z_diff_y, real_z_diff_y,
+                    frame, z_buffer_);
     }
+}
+
+double CalcVecProdXY(const Vector3& v1, const Vector3& v2) {
+    return v1(0) * v2(1) - v1(1) * v2(0);
 }
 
 void DrawTriangle(const Triangle& triangle, const TriMatrix& projected_vertices, const std::vector<PLSInSpace>& pls,
                   const Color& ambient, Frame* frame, ZBuffer* z_buffer_) {
-    // Eigen::Block'и вершин треугольника, отсортированные по Ox.
+    // вершины треугольника, отсортированные по Ox.
     auto [lowest_proj, middle_proj, highest_proj, lowest, middle, highest, lowest_norm, middle_norm, highest_norm] =
         GetVerticalOrderOfVerticesAndAttributes(projected_vertices, triangle);
 
-    /*
-        Вроде это единственное место, где я конвертирую Vector4 -> Vector3 или наоборот, если реально стоит выделить
-        конвертацию в функцию, то без проблем. В любом случае я сделаю read/write сцены в файл, а в файле я буду хранить
-        матрицы компактно, так что наверное что-то такое понадобится.
-    */
+    // Костыль
+    // --------------------
+    // constexpr static double kEpsCorrection = 0.0016;
+    // lowest_proj(0) -= kEpsCorrection;
+    // highest_proj(0) += kEpsCorrection;
+    // middle_proj(1) +=
+    //     (CalcVecProdXY(highest_proj - lowest_proj, middle_proj - lowest_proj) > 0 ? kEpsCorrection :
+    //     -kEpsCorrection);
+    // --------------------
+
     // Получаю векторы, напраленные из нижней (по Ox) точки треугольника в среднюю и верхнюю соотв.
-    Vector3 v1 = middle_proj.head(3) - lowest_proj.head(3);
-    Vector3 v2 = highest_proj.head(3) - lowest_proj.head(3);
-    // Получаю вектр нормали к плоскости треугольника.
+    Vector3 v1 = middle_proj - lowest_proj;
+    Vector3 v2 = highest_proj - lowest_proj;
+    // Получаю вектор нормали к плоскости треугольника.
     v1 = v1.cross(v2);
 
     // Смысл происходящего далее такой: я поддерживаю две точки, соответствующие друг другу, точку на треугольнике в
@@ -278,13 +305,15 @@ void DrawTriangle(const Triangle& triangle, const TriMatrix& projected_vertices,
     // Треугольник разбивается на два других с одной из сторон параллельной Oy. Далее отриссовываем эти треугольники на
     // экране соотв. функциями.
     // Я не уверен, нужно ли всё-таки менять название функции, теперь видно, что меняется?
-    FillLowerTriangle(triangle.diffuse_reflection_color, ambient, pls, lowest_proj, middle_proj, highest_proj, lowest,
-                      middle, highest, lowest_norm, middle_norm, highest_norm, real_z_diff_y, z_diff_y, z_diff_x, frame,
-                      z_buffer_, &real_x, &real_z, &x, &prev_y);
+    FillLowerTriangle(triangle.diffuse_reflection_color, triangle.specular_reflection_color, ambient,
+                      triangle.specular_power, pls, lowest_proj, middle_proj, highest_proj, lowest, middle, highest,
+                      lowest_norm, middle_norm, highest_norm, real_z_diff_y, z_diff_y, z_diff_x, frame, z_buffer_,
+                      &real_x, &real_z, &x, &prev_y);
 
-    FillUpperTriangle(triangle.diffuse_reflection_color, ambient, pls, lowest_proj, middle_proj, highest_proj, lowest,
-                      middle, highest, lowest_norm, middle_norm, highest_norm, real_z_diff_y, z_diff_y, z_diff_x, frame,
-                      z_buffer_, &real_x, &real_z, &x, &prev_y);
+    FillUpperTriangle(triangle.diffuse_reflection_color, triangle.specular_reflection_color, ambient,
+                      triangle.specular_power, pls, lowest_proj, middle_proj, highest_proj, lowest, middle, highest,
+                      lowest_norm, middle_norm, highest_norm, real_z_diff_y, z_diff_y, z_diff_x, frame, z_buffer_,
+                      &real_x, &real_z, &x, &prev_y);
 }
 
 TriMatrix ApplyFrustumTransformationOnTriangle(const Triangle& triangle, const Camera& cam) {

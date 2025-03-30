@@ -90,12 +90,14 @@ Application::World Application::PopulateWorld() {
     Object lamp;
     lamp.PushPointLightSource(light);
     AffineTransform lamp_pos = AffineTransform::Identity();
-    lamp_pos.translation() += Vector3{20, 2, 2};
+    lamp_pos.translation() += Vector3{20, 3, 2};
 
     std::ifstream file_obj("teapot.obj");
-    Object obj = Kernel::ParseObj(file_obj, {1, 1, 1}, 1);
+    Object obj = Kernel::ParseObj(file_obj, {1, 1, 1}, {0.9, 0.8, 0.5}, 50, 1);
     AffineTransform obj_pos = AffineTransform{Eigen::AngleAxisd(-std::numbers::pi / 2, Vector3::UnitY())};
-    // obj_pos.translation() += Vector3{0, 0, 20};
+    AffineTransform rot = AffineTransform{Eigen::AngleAxisd(-std::numbers::pi / 8, Vector3::UnitZ())};
+    obj_pos = rot * obj_pos;
+    obj_pos.translation() += Vector3{0, 2, 0};
 
     ret.PushObject(lamp_pos, std::move(lamp));
     ret.PushObject(obj_pos, std::move(obj));
