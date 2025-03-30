@@ -13,7 +13,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 # Я включил все мне известные флаги оптимизации в релиз сборку, -ffast-math может быть сомнительным разве что, 
 # с ним нельзя использовать isinf и вообще с +-inf? как я понял.
 # По сравнению с дебаг сборкой летает.
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -mtune=native -flto -unroll-loops -mavx2 -mbmi -mbmi2 -mpopcnt -mlzcnt -mfma -mabm -ffast-math")
+# P.s. Да, я поймал UB c -ffast-math. 
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -mtune=native -flto -unroll-loops -mavx2 -mbmi -mbmi2 -mpopcnt -mlzcnt -mfma -mabm")
 
 include(FetchContent)
 FetchContent_Declare(SFML
