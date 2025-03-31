@@ -2,16 +2,15 @@
 
 #include <fstream>
 
-#include "model/utility/object_util.h"
 #include "model/utility/simple_obj_parse.h"
 
 namespace Renderer3D {
 
-Application::Application()
+Application::Application(char* file_name, double scale)
     : spectator_(kDefaultWindowWidth * 1.0 / kDefaultWindowHeight, kSpectatorMovementSpeed),
       window_(sf::VideoMode(kDefaultWindowWidth, kDefaultWindowHeight), kWindowName),
       frame_(Frame::SHeight{kDefaultWindowHeight}, Frame::SWidth{kDefaultWindowWidth}),
-      world_(PopulateWorld()) {
+      world_(PopulateWorld(file_name, scale)) {
 }
 
 void Application::Run() {
@@ -59,7 +58,7 @@ void Application::HandleLoopIteration(const sf::Sprite& sprite, sf::Texture* tex
     // Вся обработка клавиш сжимается в эти 4 строки, думаю, неплохо, и не должно влиять на производительность.
     for (const auto& association : UsedKeysMapping) {
         if (sf::Keyboard::isKeyPressed(association.key)) {
-            association.handler(&spectator_);
+            (*this.*association.handler)();
         }
     }
 
@@ -68,102 +67,52 @@ void Application::HandleLoopIteration(const sf::Sprite& sprite, sf::Texture* tex
     DrawFrame(frame_, sprite, texture);
 }
 
-Application::World Application::PopulateWorld() {
+Application::World Application::PopulateWorld(char* file_name, double scale) {
     World ret;
 
-    // PointLightSource light({10, 8, 10}, 0, -3, 0.1);
-    // Object lamp;
-    // lamp.PushPointLightSource(light);
-    // AffineTransform lamp_pos = AffineTransform::Identity();
-    // lamp_pos.translation() += Vector3{20, 0, 20};
-    // AffineTransform pos = AffineTransform::Identity();
-    // pos.translation() += Vector3{0, 0, 20};
-    // ret.PushObject(pos, std::move(Kernel::CreateOctahedron(10, {0.5, 0.5, 1})));
-    // ret.PushObject(lamp_pos, std::move(lamp));
-    // lamp_pos.translation() -= Vector3{40, 0, 0};
-    // Object lamp2;
-    // PointLightSource light2({2, 4, 2}, 0, -3, 0.1);
-    // lamp2.PushPointLightSource(light2);
-    // ret.PushObject(lamp_pos, std::move(lamp2));
-
-
-    PointLightSource light({1, 0.8, 1}, 0.0001, 0.005, 0.01);
-    Object lamp;
-    lamp.PushPointLightSource(light);
-    AffineTransform lamp_pos = AffineTransform::Identity();
-    lamp_pos.translation() += Vector3{20, 3, 2};
-
-    std::ifstream file_obj("teapot.obj");
-    Object obj = Kernel::ParseObj(file_obj, 0, {1, 1, 1}, {0.9, 0.8, 0.5}, 50, 1);
-    AffineTransform obj_pos = AffineTransform{Eigen::AngleAxisd(-std::numbers::pi / 2, Vector3::UnitY())};
-    AffineTransform rot = AffineTransform{Eigen::AngleAxisd(-std::numbers::pi / 5, Vector3::UnitZ())};
-    obj_pos = rot * obj_pos;
-    obj_pos.translation() += Vector3{0, 2, 0};
-
-    ret.PushObject(lamp_pos, std::move(lamp));
-    ret.PushObject(obj_pos, std::move(obj));
-
-
-
-    // PointLightSource light({1, 0.8, 1}, 0.0001, 0.002, 0.001);
-    // Object lamp;
-    // lamp.PushPointLightSource(light);
-    // AffineTransform lamp_pos = AffineTransform::Identity();
-    // double scale = 4; 
-    // lamp_pos.translation() += Vector3{20, 13, 20};
-
-    // Triangle tr1;
-    // tr1.vertices = TriMatrix{{0 * scale, 2.4323978 * scale, 4.99312 * scale}, {0 * scale, 4.123 * scale, 2.11123 * scale}, {0 * scale, 1 * scale, -0.5423 * scale}, {1, 1, 1}};
-    // tr1.diffuse_reflection_color = {1, 1, 1};
-    // Triangle tr2;
-    // tr2.vertices = TriMatrix{{10 * scale, 2.4323978 * scale, 4.99312 * scale}, {30 * scale, 4.123 * scale, 2.11123 * scale}, {10 * scale, 1 * scale, -0.5423 * scale}, {1, 1, 1}};
-    // tr2.diffuse_reflection_color = {1, 1, 1};
-    // Object obj;
-    // tr1.diffuse_reflection_color = {1, 0, 0};
-    // obj.PushTriangle(tr1);
-    // obj.PushTriangle(tr2);
-
-    // AffineTransform obj_pos = AffineTransform{Eigen::AngleAxisd(-std::numbers::pi / 2, Vector3::UnitY())};
-    // AffineTransform rot = AffineTransform{Eigen::AngleAxisd(-std::numbers::pi / 8, Vector3::UnitZ())};
-    // obj_pos = rot * obj_pos;
-
-
-    // ret.PushObject(lamp_pos, std::move(lamp));ret.PushObject(lamp_pos, std::move(lamp));
-    // ret.PushObject(obj_pos, std::move(obj));
+    std::ifstream file_obj(file_name);
+    Object obj = Kernel::ParseObj(file_obj, {1, 1, 1}, {0.9, 0.8, 0.5}, 50, scale);
+    ret.PushObject(AffineTransform::Identity(), std::move(obj));
 
     return ret;
 }
 
-void Application::HandleUp(Spectator* spectator) {
-    spectator->MoveUp();
+void Application::HandleUp() {
+    spectator_.MoveUp();
 }
 
-void Application::HandleDown(Spectator* spectator) {
-    spectator->MoveDown();
+void Application::HandleDown() {
+    spectator_.MoveDown();
 }
 
-void Application::HandleLeft(Spectator* spectator) {
-    spectator->MoveLeft();
+void Application::HandleLeft() {
+    spectator_.MoveLeft();
 }
 
-void Application::HandleRight(Spectator* spectator) {
-    spectator->MoveRight();
+void Application::HandleRight() {
+    spectator_.MoveRight();
 }
 
-void Application::HandleForward(Spectator* spectator) {
-    spectator->MoveForward();
+void Application::HandleForward() {
+    spectator_.MoveForward();
 }
 
-void Application::HandleBackward(Spectator* spectator) {
-    spectator->MoveBackward();
+void Application::HandleBackward() {
+    spectator_.MoveBackward();
 }
 
-void Application::HandleTurnRight(Spectator* spectator) {
-    spectator->TurnRight();
+void Application::HandleTurnRight() {
+    spectator_.TurnRight();
 }
 
-void Application::HandleTurnLeft(Spectator* spectator) {
-    spectator->TurnLeft();
+void Application::HandleTurnLeft() {
+    spectator_.TurnLeft();
+}
+
+void Application::HandleLight() {
+    Object lamp;
+    lamp.PushPointLightSource(kDefaultLightSource);
+    world_.PushObject(spectator_.Position(), std::move(lamp));
 }
 
 }  // namespace Renderer3D

@@ -38,6 +38,7 @@ SET(SOURCES
     src/model/spectator.cpp
     src/application.cpp
     src/utility/except.cpp
+    src/utility/cmd_parser.cpp
     src/model/utility/object_util.cpp
     src/model/utility/simple_obj_parse.cpp)
 
