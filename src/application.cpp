@@ -86,6 +86,7 @@ Application::World Application::PopulateWorld() {
     // lamp2.PushPointLightSource(light2);
     // ret.PushObject(lamp_pos, std::move(lamp2));
 
+
     PointLightSource light({1, 0.8, 1}, 0.0001, 0.005, 0.01);
     Object lamp;
     lamp.PushPointLightSource(light);
@@ -93,14 +94,43 @@ Application::World Application::PopulateWorld() {
     lamp_pos.translation() += Vector3{20, 3, 2};
 
     std::ifstream file_obj("teapot.obj");
-    Object obj = Kernel::ParseObj(file_obj, {1, 1, 1}, {0.9, 0.8, 0.5}, 50, 1);
+    Object obj = Kernel::ParseObj(file_obj, 0, {1, 1, 1}, {0.9, 0.8, 0.5}, 50, 1);
     AffineTransform obj_pos = AffineTransform{Eigen::AngleAxisd(-std::numbers::pi / 2, Vector3::UnitY())};
-    AffineTransform rot = AffineTransform{Eigen::AngleAxisd(-std::numbers::pi / 8, Vector3::UnitZ())};
+    AffineTransform rot = AffineTransform{Eigen::AngleAxisd(-std::numbers::pi / 5, Vector3::UnitZ())};
     obj_pos = rot * obj_pos;
     obj_pos.translation() += Vector3{0, 2, 0};
 
     ret.PushObject(lamp_pos, std::move(lamp));
     ret.PushObject(obj_pos, std::move(obj));
+
+
+
+    // PointLightSource light({1, 0.8, 1}, 0.0001, 0.002, 0.001);
+    // Object lamp;
+    // lamp.PushPointLightSource(light);
+    // AffineTransform lamp_pos = AffineTransform::Identity();
+    // double scale = 4; 
+    // lamp_pos.translation() += Vector3{20, 13, 20};
+
+    // Triangle tr1;
+    // tr1.vertices = TriMatrix{{0 * scale, 2.4323978 * scale, 4.99312 * scale}, {0 * scale, 4.123 * scale, 2.11123 * scale}, {0 * scale, 1 * scale, -0.5423 * scale}, {1, 1, 1}};
+    // tr1.diffuse_reflection_color = {1, 1, 1};
+    // Triangle tr2;
+    // tr2.vertices = TriMatrix{{10 * scale, 2.4323978 * scale, 4.99312 * scale}, {30 * scale, 4.123 * scale, 2.11123 * scale}, {10 * scale, 1 * scale, -0.5423 * scale}, {1, 1, 1}};
+    // tr2.diffuse_reflection_color = {1, 1, 1};
+    // Object obj;
+    // tr1.diffuse_reflection_color = {1, 0, 0};
+    // obj.PushTriangle(tr1);
+    // obj.PushTriangle(tr2);
+
+    // AffineTransform obj_pos = AffineTransform{Eigen::AngleAxisd(-std::numbers::pi / 2, Vector3::UnitY())};
+    // AffineTransform rot = AffineTransform{Eigen::AngleAxisd(-std::numbers::pi / 8, Vector3::UnitZ())};
+    // obj_pos = rot * obj_pos;
+
+
+    // ret.PushObject(lamp_pos, std::move(lamp));ret.PushObject(lamp_pos, std::move(lamp));
+    // ret.PushObject(obj_pos, std::move(obj));
+
     return ret;
 }
 

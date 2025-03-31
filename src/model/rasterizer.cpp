@@ -76,6 +76,7 @@ void FillSegment(const Color& diffuse_color, const Color& specular_color, const 
                  const Vector3& interpolated_point2, const Vector3& interpolated_normal1,
                  const Vector3& interpolated_normal2, double real_y1, double real_y2, size_t x, double real_z,
                  double z_diff_y, double real_z_diff_y, Frame* frame, ZBuffer* z_buffer_) {
+    assert(x < frame->Height());
     Vector3 interpolated_point = interpolated_point1;
     Vector3 interpolated_point_inc = (interpolated_point2 - interpolated_point1) / (real_y2 - real_y1);
     Vector3 interpolated_normal = interpolated_normal1;
@@ -92,7 +93,6 @@ void FillSegment(const Color& diffuse_color, const Color& specular_color, const 
     assert(y1 < y2);
 
     size_t edge = (y2 >= frame->Width() ? frame->Width() : y2);
-
     for (size_t y = y1; y != edge; ++y, real_z += z_diff_y) {
         if (real_z < (*z_buffer_)(x, y)) {
             (*z_buffer_)(x, y) = real_z;
@@ -105,15 +105,28 @@ void FillSegment(const Color& diffuse_color, const Color& specular_color, const 
     }
 }
 
-void FillLowerTriangle(const Color& diffuse_color, const Color& specular_color, const Color& ambient,
-                       uint32_t specular_pow, const std::vector<PLSInSpace>& pls, const Vector3& lowest_proj,
-                       const Vector3& middle_proj, const Vector3& highest_proj, const Vector3& lowest,
-                       const Vector3& middle, const Vector3& highest, const Vector3& lowest_norm,
-                       const Vector3& middle_norm, const Vector3& highest_norm, double real_z_diff_y, double z_diff_y,
-                       double z_diff_x, Frame* frame, ZBuffer* z_buffer_, double* real_x, double* real_z, size_t* x,
-                       double* prev_y) {
-    double mid_x = (middle_proj(0) <= 1 ? middle_proj(0) : 1);
+double CalcVecProdXY(const Vector3& v1, const Vector3& v2) {
+    return v1(0) * v2(1) - v1(1) * v2(0);
+}
+
+std::array<double, 2> FillLowerTriangle(const Color& diffuse_color, const Color& specular_color, const Color& ambient,
+                                        uint32_t specular_pow, const std::vector<PLSInSpace>& pls,
+                                        const Vector3& lowest_proj, Vector3 middle_proj, Vector3 highest_proj,
+                                        const Vector3& lowest, Vector3 middle, Vector3 highest,
+                                        const Vector3& lowest_norm, Vector3 middle_norm, Vector3 highest_norm,
+                                        double real_z_diff_y, double z_diff_y, double z_diff_x, Frame* frame,
+                                        ZBuffer* z_buffer_, double* real_x, double* real_z, size_t* x, double* prev_y) {
     double dx = kSideOfTheCube / frame->Height();
+    double mid_x = (middle_proj(0) <= 1 ? middle_proj(0) : 1);
+
+    if (CalcVecProdXY(middle_proj - lowest_proj, highest_proj - lowest_proj) > 0) {
+        std::swap(middle_proj, highest_proj);
+        std::swap(middle, highest);
+        std::swap(middle_norm, highest_norm);
+    }
+
+    double prev_real_y1 = std::numeric_limits<double>::infinity();
+    double prev_real_y2 = -std::numeric_limits<double>::infinity();
     for (; *real_x < mid_x; ++(*x), *real_x += dx, *real_z += z_diff_x) {
         // real_y1, real_y2 -- y координаты отрезка в видимом пространстве, который будет нарисован на экране.
         double real_y1 = highest_proj(0) == lowest_proj(0)
@@ -125,60 +138,67 @@ void FillLowerTriangle(const Color& diffuse_color, const Color& specular_color, 
                              : lowest_proj(1) + (middle_proj(1) - lowest_proj(1)) * (*real_x - lowest_proj(0)) /
                                                     (middle_proj(0) - lowest_proj(0));
 
-        if ((real_y2 < -1 && real_y1 < -1) || (real_y1 > 1 && real_y2 > 1)) {
+        if (real_y1 > 1 || real_y2 < -1) {
             continue;
         }
+
+        double actual_real_y1 = real_y1 < prev_real_y1 ? real_y1 : prev_real_y1;
+        double actual_real_y2 = real_y2 > prev_real_y2 ? real_y2 : prev_real_y2;
 
         // Я знаю, как избавиться от всех операций деления в этой функции, но пока оставлю так.
         // Интерполяция аттрибутов
         // --------------------
         // x, y, z координаты
         Vector3 interpolated_point1 =
-            highest_proj(0) == lowest_proj(0)
+            highest_proj(1) == lowest_proj(1)
                 ? highest
-                : lowest + (highest - lowest) * (*real_x - lowest_proj(0)) / (highest_proj(0) - lowest_proj(0));
+                : lowest + (highest - lowest) * (actual_real_y1 - lowest_proj(1)) / (highest_proj(1) - lowest_proj(1));
         Vector3 interpolated_point2 =
-            middle_proj(0) == lowest_proj(0)
+            middle_proj(1) == lowest_proj(1)
                 ? middle
-                : lowest + (middle - lowest) * (*real_x - lowest_proj(0)) / (middle_proj(0) - lowest_proj(0));
+                : lowest + (middle - lowest) * (actual_real_y2 - lowest_proj(1)) / (middle_proj(1) - lowest_proj(1));
         // нормали
-        Vector3 interpolated_normal1 = highest_proj(0) == lowest_proj(0)
+        Vector3 interpolated_normal1 = highest_proj(1) == lowest_proj(1)
                                            ? highest_norm
-                                           : lowest_norm + (highest_norm - lowest_norm) * (*real_x - lowest_proj(0)) /
-                                                               (highest_proj(0) - lowest_proj(0));
-        Vector3 interpolated_normal2 = middle_proj(0) == lowest_proj(0)
+                                           : lowest_norm + (highest_norm - lowest_norm) *
+                                                               (actual_real_y1 - lowest_proj(1)) /
+                                                               (highest_proj(1) - lowest_proj(1));
+        Vector3 interpolated_normal2 = middle_proj(1) == lowest_proj(1)
                                            ? middle_norm
-                                           : lowest_norm + (middle_norm - lowest_norm) * (*real_x - lowest_proj(0)) /
-                                                               (middle_proj(0) - lowest_proj(0));
+                                           : lowest_norm + (middle_norm - lowest_norm) *
+                                                               (actual_real_y2 - lowest_proj(1)) /
+                                                               (middle_proj(1) - lowest_proj(1));
         // --------------------
-
-        if (real_y1 > real_y2) {
-            std::swap(real_y1, real_y2);
-            // Данные тоже нужно свапнуть
-            std::swap(interpolated_point1, interpolated_point2);
-            std::swap(interpolated_normal1, interpolated_normal2);
-        }
-
-        *real_z += real_z_diff_y * (real_y1 - *prev_y);
-        *prev_y = real_y1;
 
         // Рисуем этот отрезок
         FillSegment(diffuse_color, specular_color, ambient, specular_pow, pls, interpolated_point1, interpolated_point2,
-                    interpolated_normal1, interpolated_normal2, real_y1, real_y2, *x, *real_z, z_diff_y, real_z_diff_y,
-                    frame, z_buffer_);
+                    interpolated_normal1, interpolated_normal2, actual_real_y1, actual_real_y2, *x,
+                    *real_z + real_z_diff_y * (actual_real_y1 - *prev_y), z_diff_y, real_z_diff_y, frame, z_buffer_);
+
+        *real_z += real_z_diff_y * (real_y1 - *prev_y);
+        *prev_y = real_y1;
+        prev_real_y1 = real_y1;
+        prev_real_y2 = real_y2;
     }
+    return {prev_real_y1, prev_real_y2};
 }
 
 void FillUpperTriangle(const Color& diffuse_color, const Color& specular_color, const Color& ambient,
-                       uint32_t specular_pow, const std::vector<PLSInSpace>& pls, const Vector3& lowest_proj,
-                       const Vector3& middle_proj, const Vector3& highest_proj, const Vector3& lowest,
-                       const Vector3& middle, const Vector3& highest, const Vector3& lowest_norm,
-                       const Vector3& middle_norm, const Vector3& highest_norm, double real_z_diff_y, double z_diff_y,
-                       double z_diff_x, Frame* frame, ZBuffer* z_buffer_, double* real_x, double* real_z, size_t* x,
-                       double* prev_y) {
-    double top_x = (highest_proj(0) <= 1 ? highest_proj(0) : 1);
+                       uint32_t specular_pow, const std::vector<PLSInSpace>& pls, Vector3 lowest_proj,
+                       Vector3 middle_proj, const Vector3& highest_proj, Vector3 lowest, Vector3 middle,
+                       const Vector3& highest, Vector3 lowest_norm, Vector3 middle_norm, const Vector3& highest_norm,
+                       double real_z_diff_y, double z_diff_y, double z_diff_x, double prev_real_y1, double prev_real_y2,
+                       Frame* frame, ZBuffer* z_buffer_, double* real_x, double* real_z, size_t* x, double* prev_y) {
     double dx = kSideOfTheCube / frame->Height();
-    for (; *real_x < top_x; ++(*x), *real_x += dx, *real_z += z_diff_x) {
+    double top_x = (highest_proj(0) <= 1 ? highest_proj(0) : 1);
+
+    if (CalcVecProdXY(highest_proj - middle_proj, highest_proj - lowest_proj) < 0) {
+        std::swap(middle_proj, lowest_proj);
+        std::swap(middle, lowest);
+        std::swap(middle_norm, lowest_norm);
+    }
+
+    for (; *real_x <= top_x; ++(*x), *real_x += dx, *real_z += z_diff_x) {
         // real_y1, real_y2 -- y координаты отрезка в видимом пространстве, который будет нарисован на экране.
         double real_y1 = highest_proj(0) == lowest_proj(0)
                              ? highest_proj(1)
@@ -189,52 +209,105 @@ void FillUpperTriangle(const Color& diffuse_color, const Color& specular_color, 
                              : middle_proj(1) + (highest_proj(1) - middle_proj(1)) * (*real_x - middle_proj(0)) /
                                                     (highest_proj(0) - middle_proj(0));
 
-        if ((real_y2 < -1 && real_y1 < -1) || (real_y1 > 1 && real_y2 > 1)) {
+        if (real_y1 > 1 || real_y2 < -1) {
             continue;
         }
+
+        double actual_real_y1 = real_y1 < prev_real_y1 ? real_y1 : prev_real_y1;
+        double actual_real_y2 = real_y2 > prev_real_y2 ? real_y2 : prev_real_y2;
 
         // Я знаю, как избавиться от всех операций деления в этой функции, но пока оставлю так.
         // Интерполяция аттрибутов
         // --------------------
         // x, y, z координаты
         Vector3 interpolated_point1 =
-            highest_proj(0) == lowest_proj(0)
+            highest_proj(1) == lowest_proj(1)
                 ? highest
-                : lowest + (highest - lowest) * (*real_x - lowest_proj(0)) / (highest_proj(0) - lowest_proj(0));
+                : lowest + (highest - lowest) * (actual_real_y1 - lowest_proj(1)) / (highest_proj(1) - lowest_proj(1));
         Vector3 interpolated_point2 =
-            highest_proj(0) == middle_proj(0)
+            highest_proj(1) == middle_proj(1)
                 ? highest
-                : middle + (highest - middle) * (*real_x - middle_proj(0)) / (highest_proj(0) - middle_proj(0));
+                : middle + (highest - middle) * (actual_real_y2 - middle_proj(1)) / (highest_proj(1) - middle_proj(1));
         // нормали
-        Vector3 interpolated_normal1 = highest_proj(0) == lowest_proj(0)
+        Vector3 interpolated_normal1 = highest_proj(1) == lowest_proj(1)
                                            ? highest_norm
-                                           : lowest_norm + (highest_norm - lowest_norm) * (*real_x - lowest_proj(0)) /
-                                                               (highest_proj(0) - lowest_proj(0));
-        Vector3 interpolated_normal2 = highest_proj(0) == middle_proj(0)
+                                           : lowest_norm + (highest_norm - lowest_norm) *
+                                                               (actual_real_y1 - lowest_proj(1)) /
+                                                               (highest_proj(1) - lowest_proj(1));
+        Vector3 interpolated_normal2 = highest_proj(1) == middle_proj(1)
                                            ? highest_norm
-                                           : middle_norm + (highest_norm - middle_norm) * (*real_x - middle_proj(0)) /
-                                                               (highest_proj(0) - middle_proj(0));
+                                           : middle_norm + (highest_norm - middle_norm) *
+                                                               (actual_real_y2 - middle_proj(1)) /
+                                                               (highest_proj(1) - middle_proj(1));
         // --------------------
 
-        if (real_y1 > real_y2) {
-            std::swap(real_y1, real_y2);
+        // Рисуем этот отрезок
+        FillSegment(diffuse_color, specular_color, ambient, specular_pow, pls, interpolated_point1, interpolated_point2,
+                    interpolated_normal1, interpolated_normal2, actual_real_y1, actual_real_y2, *x,
+                    *real_z + real_z_diff_y * (actual_real_y1 - *prev_y), z_diff_y, real_z_diff_y, frame, z_buffer_);
+        *real_z += real_z_diff_y * (real_y1 - *prev_y);
+        *prev_y = real_y1;
+        prev_real_y1 = real_y1;
+        prev_real_y2 = real_y2;
+    }
+    if (*x < frame->Height()) {
+        *real_x = top_x;
+
+        double real_y1 = highest_proj(0) == lowest_proj(0)
+                             ? highest_proj(1)
+                             : lowest_proj(1) + (highest_proj(1) - lowest_proj(1)) * (*real_x - lowest_proj(0)) /
+                                                    (highest_proj(0) - lowest_proj(0));
+        double real_y2 = highest_proj(0) == middle_proj(0)
+                             ? highest_proj(1)
+                             : middle_proj(1) + (highest_proj(1) - middle_proj(1)) * (*real_x - middle_proj(0)) /
+                                                    (highest_proj(0) - middle_proj(0));
+
+        if ((real_y2 < -1 && real_y1 < -1) || (real_y1 > 1 && real_y2 > 1)) {
+            return;
+        }
+
+        double actual_real_y1 = real_y1 < prev_real_y1 ? real_y1 : prev_real_y1;
+        double actual_real_y2 = real_y2 > prev_real_y2 ? real_y2 : prev_real_y2;
+
+        // Я знаю, как избавиться от всех операций деления в этой функции, но пока оставлю так.
+        // Интерполяция аттрибутов
+        // --------------------
+        // x, y, z координаты
+        Vector3 interpolated_point1 =
+            highest_proj(1) == lowest_proj(1)
+                ? highest
+                : lowest + (highest - lowest) * (actual_real_y1 - lowest_proj(1)) / (highest_proj(1) - lowest_proj(1));
+        Vector3 interpolated_point2 =
+            highest_proj(1) == middle_proj(1)
+                ? highest
+                : middle + (highest - middle) * (actual_real_y2 - middle_proj(1)) / (highest_proj(1) - middle_proj(1));
+        // нормали
+        Vector3 interpolated_normal1 = highest_proj(1) == lowest_proj(1)
+                                           ? highest_norm
+                                           : lowest_norm + (highest_norm - lowest_norm) *
+                                                               (actual_real_y1 - lowest_proj(1)) /
+                                                               (highest_proj(1) - lowest_proj(1));
+        Vector3 interpolated_normal2 = highest_proj(1) == middle_proj(1)
+                                           ? highest_norm
+                                           : middle_norm + (highest_norm - middle_norm) *
+                                                               (actual_real_y2 - middle_proj(1)) /
+                                                               (highest_proj(1) - middle_proj(1));
+        // --------------------
+
+        if (actual_real_y1 > actual_real_y2) {
+            std::swap(actual_real_y1, actual_real_y2);
             // Данные тоже нужно свапнуть
             std::swap(interpolated_point1, interpolated_point2);
             std::swap(interpolated_normal1, interpolated_normal2);
         }
 
         *real_z += real_z_diff_y * (real_y1 - *prev_y);
-        *prev_y = real_y1;
 
         // Рисуем этот отрезок
         FillSegment(diffuse_color, specular_color, ambient, specular_pow, pls, interpolated_point1, interpolated_point2,
-                    interpolated_normal1, interpolated_normal2, real_y1, real_y2, *x, *real_z, z_diff_y, real_z_diff_y,
-                    frame, z_buffer_);
+                    interpolated_normal1, interpolated_normal2, actual_real_y1, actual_real_y2, *x, *real_z, z_diff_y,
+                    real_z_diff_y, frame, z_buffer_);
     }
-}
-
-double CalcVecProdXY(const Vector3& v1, const Vector3& v2) {
-    return v1(0) * v2(1) - v1(1) * v2(0);
 }
 
 void DrawTriangle(const Triangle& triangle, const TriMatrix& projected_vertices, const std::vector<PLSInSpace>& pls,
@@ -305,15 +378,15 @@ void DrawTriangle(const Triangle& triangle, const TriMatrix& projected_vertices,
     // Треугольник разбивается на два других с одной из сторон параллельной Oy. Далее отриссовываем эти треугольники на
     // экране соотв. функциями.
     // Я не уверен, нужно ли всё-таки менять название функции, теперь видно, что меняется?
-    FillLowerTriangle(triangle.diffuse_reflection_color, triangle.specular_reflection_color, ambient,
-                      triangle.specular_power, pls, lowest_proj, middle_proj, highest_proj, lowest, middle, highest,
-                      lowest_norm, middle_norm, highest_norm, real_z_diff_y, z_diff_y, z_diff_x, frame, z_buffer_,
-                      &real_x, &real_z, &x, &prev_y);
+    auto [prev_real_y1, prev_real_y2] = FillLowerTriangle(
+        triangle.diffuse_reflection_color, triangle.specular_reflection_color, ambient, triangle.specular_power, pls,
+        lowest_proj, middle_proj, highest_proj, lowest, middle, highest, lowest_norm, middle_norm, highest_norm,
+        real_z_diff_y, z_diff_y, z_diff_x, frame, z_buffer_, &real_x, &real_z, &x, &prev_y);
 
     FillUpperTriangle(triangle.diffuse_reflection_color, triangle.specular_reflection_color, ambient,
                       triangle.specular_power, pls, lowest_proj, middle_proj, highest_proj, lowest, middle, highest,
-                      lowest_norm, middle_norm, highest_norm, real_z_diff_y, z_diff_y, z_diff_x, frame, z_buffer_,
-                      &real_x, &real_z, &x, &prev_y);
+                      lowest_norm, middle_norm, highest_norm, real_z_diff_y, z_diff_y, z_diff_x, prev_real_y1,
+                      prev_real_y2, frame, z_buffer_, &real_x, &real_z, &x, &prev_y);
 }
 
 TriMatrix ApplyFrustumTransformationOnTriangle(const Triangle& triangle, const Camera& cam) {

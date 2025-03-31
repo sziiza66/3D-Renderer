@@ -20,10 +20,22 @@ std::array<size_t, 3> ParseIndexes(const std::string& srt) {
     return ret;
 }
 
+void Correct(double scale, double correction_eps, std::vector<Vector3>* vertices) {
+    if (correction_eps <= 0) {
+        return;
+    }
+    const Vector3& last = vertices->back();
+    for (size_t i = 0; i + 1 < vertices->size(); ++i) {
+        if ((last - (*vertices)[i]).norm() < correction_eps * scale) {
+            (*vertices)[i] = last;
+        }
+    }
+}
+
 }  // namespace
 
-Object ParseObj(std::ifstream& file, const Color& diffuse_reflection_color, const Color& specular_reflection_color,
-                uint32_t specular_power, double scale) {
+Object ParseObj(std::ifstream& file, double correction_eps, const Color& diffuse_reflection_color,
+                const Color& specular_reflection_color, uint32_t specular_power, double scale) {
     // Может парсить определенное подмножество .obj файлов, достает треугольники с их нрмалями.
     // Наличие других полигонов кроме треугольников приведёт преждевременному завершению функции, объект прочитается не
     // полностью и может быть кривым.
@@ -40,6 +52,7 @@ Object ParseObj(std::ifstream& file, const Color& diffuse_reflection_color, cons
             vertices.back()[0] *= scale;
             vertices.back()[1] *= scale;
             vertices.back()[2] *= scale;
+            Correct(scale, correction_eps, &vertices);
         } else if (type == "vn") {
             normals.emplace_back();
             file >> normals.back()[0] >> normals.back()[1] >> normals.back()[2];
