@@ -22,8 +22,8 @@ std::array<size_t, 3> ParseIndexes(const std::string& srt) {
 
 }  // namespace
 
-Object ParseObj(std::ifstream& file, const Color& diffuse_reflection_color,
-                const Color& specular_reflection_color, uint32_t specular_power, double scale) {
+Object ParseObj(std::ifstream& in, const Color& diffuse_reflection_color, const Color& specular_reflection_color,
+                uint32_t specular_power, double scale) {
     // Может парсить определенное подмножество .obj файлов, достает треугольники с их нрмалями.
     // Наличие других полигонов кроме треугольников приведёт преждевременному завершению функции, объект прочитается не
     // полностью и может быть кривым.
@@ -33,16 +33,16 @@ Object ParseObj(std::ifstream& file, const Color& diffuse_reflection_color,
     std::vector<Vector3> vertices;
     std::vector<Vector3> normals;
     std::string type;
-    while (file >> type) {
+    while (in >> type) {
         if (type == "v") {
             vertices.emplace_back();
-            file >> vertices.back()[0] >> vertices.back()[1] >> vertices.back()[2];
+            in >> vertices.back()[0] >> vertices.back()[1] >> vertices.back()[2];
             vertices.back()[0] *= scale;
             vertices.back()[1] *= scale;
             vertices.back()[2] *= scale;
         } else if (type == "vn") {
             normals.emplace_back();
-            file >> normals.back()[0] >> normals.back()[1] >> normals.back()[2];
+            in >> normals.back()[0] >> normals.back()[1] >> normals.back()[2];
         } else if (type == "f") {
             // v/vt/vn
             std::string vertex_info;
@@ -51,7 +51,7 @@ Object ParseObj(std::ifstream& file, const Color& diffuse_reflection_color,
             new_triangle.specular_reflection_color = specular_reflection_color;
             new_triangle.specular_power = specular_power;
             for (uint8_t i = 0; i < 3; ++i) {
-                file >> vertex_info;
+                in >> vertex_info;
                 auto indexes = ParseIndexes(vertex_info);
                 if (indexes[0] > 0 && indexes[0] <= vertices.size()) {
                     new_triangle.vertices.col(i) = vertices[indexes[0] - 1].homogeneous();

@@ -26,7 +26,7 @@ void PrintReference() {
     std::cout
         << "Intended usage of the program:\n./renderer [path] [scale]\n[path] is the path to .obj file, [scale] is "
            "a real number.\nObject in [path] will be rendered [scale] times bigger than it is in the "
-           "[path].\n[scale] is optional parameter and is equal to 1 ne default.\n";
+           "[path].\n[scale] is optional parameter and is equal to 1 by default.\n";
 }
 
 }  // namespace Renderer3D
