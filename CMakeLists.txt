@@ -42,12 +42,12 @@ SET(SOURCES
     src/model/utility/object_util.cpp
     src/model/utility/simple_obj_parse.cpp)
 
-add_executable(main ${SOURCES})
-target_link_libraries(main PRIVATE sfml-graphics)
+add_executable(renderer ${SOURCES})
+target_link_libraries(renderer PRIVATE sfml-graphics)
 
 if(WIN32)
     add_custom_command(
-        TARGET main
+        TARGET renderer
         COMMENT "Copy OpenAL DLL"
         PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${SFML_SOURCE_DIR}/extlibs/bin/$<IF:$<EQUAL:${CMAKE_SIZEOF_VOID_P},8>,x64,x86>/openal32.dll $<TARGET_FILE_DIR:main>
         VERBATIM)
