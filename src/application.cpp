@@ -78,7 +78,7 @@ Application::World Application::PopulateWorld(char* file_name, double scale) {
     World ret;
 
     std::ifstream file_obj(file_name);
-    Object obj = Kernel::ParseObj(file_obj, {1, 1, 1}, {0.9, 0.8, 0.5}, 50, scale);
+    Object obj = Kernel::ParseObj(file_obj, kDefaultDiffuseColor, kDefaultSpecularColor, kDefaultSpecularPower, scale);
     ret.PushObject(AffineTransform::Identity(), std::move(obj));
 
     return ret;
