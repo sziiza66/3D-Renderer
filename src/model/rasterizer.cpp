@@ -53,14 +53,14 @@ void ApplyPointLighting(const PLSInSpace& pls, uint32_t specular_pow, const Vect
     Vector3 distance_vector = pls.position - point;
     double diffuse_coef = normal.dot(distance_vector.normalized());
     diffuse_coef = (diffuse_coef > 0 ? diffuse_coef : 0);
+    if (diffuse_coef == 0) {
+        return;
+    }
     Color pl_intensity =
         CalculatePointLightIntensityColor(pls.source_data.color, pls.source_data.k_const, pls.source_data.k_linear,
                                           pls.source_data.k_quadr, distance_vector.squaredNorm());
     *diffuse_modulator += diffuse_coef * pl_intensity;
 
-    if (diffuse_coef <= 0) {
-        return;
-    }
     double specular_coef = normal.dot((distance_vector - point).normalized());
     specular_coef = ApplyBinPow((specular_coef > 0 ? specular_coef : 0), specular_pow);
     *specular_modulator += diffuse_coef * specular_coef * pl_intensity;
@@ -71,8 +71,14 @@ void ApplySpotLighting(const SLSInSpace& sls, uint32_t specular_pow, const Vecto
     Vector3 distance_vector = sls.position - point;
     double diffuse_coef = normal.dot(distance_vector.normalized());
     diffuse_coef = (diffuse_coef > 0 ? diffuse_coef : 0);
+    if (diffuse_coef == 0) {
+        return;
+    }
     double concentration_coef = -sls.source_data.direction.dot(distance_vector.normalized());
     concentration_coef = (concentration_coef > 0 ? concentration_coef : 0);
+    if (concentration_coef == 0) {
+        return;
+    }
     concentration_coef = ApplyBinPow(concentration_coef, sls.source_data.concentration);
     Color pl_intensity =
         concentration_coef * CalculatePointLightIntensityColor(sls.source_data.color, sls.source_data.k_const,
@@ -80,25 +86,22 @@ void ApplySpotLighting(const SLSInSpace& sls, uint32_t specular_pow, const Vecto
                                                                distance_vector.squaredNorm());
     *diffuse_modulator += diffuse_coef * pl_intensity;
 
-    if (diffuse_coef <= 0) {
-        return;
-    }
     double specular_coef = normal.dot((distance_vector - point).normalized());
     specular_coef = ApplyBinPow((specular_coef > 0 ? specular_coef : 0), specular_pow);
     *specular_modulator += diffuse_coef * specular_coef * pl_intensity;
 }
 
-void ApplyDirectionalLighting(const DirectionalLightSource& dls, uint32_t specular_pow, const Vector3& normal,
-                              Color* diffuse_modulator, Color* specular_modulator) {
-    double diffuse_coef = normal.dot(dls.direction);
+void ApplyDirectionalLighting(const DirectionalLightSource& dls, uint32_t specular_pow, const Vector3& point,
+                              const Vector3& normal, Color* diffuse_modulator, Color* specular_modulator) {
+    double diffuse_coef = -normal.dot(dls.direction);
     diffuse_coef = (diffuse_coef > 0 ? diffuse_coef : 0);
+    if (diffuse_coef == 0) {
+        return;
+    }
 
     *diffuse_modulator += diffuse_coef * dls.color;
 
-    if (diffuse_coef <= 0) {
-        return;
-    }
-    double specular_coef = normal.dot(dls.direction);
+    double specular_coef = -normal.dot((dls.direction + point.normalized()).normalized());
     specular_coef = ApplyBinPow((specular_coef > 0 ? specular_coef : 0), specular_pow);
     *specular_modulator += diffuse_coef * specular_coef * dls.color;
 }
@@ -119,7 +122,7 @@ DiscreteColor CalculateColorOfPixel(const Color& diffuse_color, const Color& spe
     }
 
     for (const DirectionalLightSource& dls : directional_lights) {
-        ApplyDirectionalLighting(dls, specular_pow, normal, &diffuse_modulator, &specular_modulator);
+        ApplyDirectionalLighting(dls, specular_pow, point, normal, &diffuse_modulator, &specular_modulator);
     }
 
     return MakeDiscrete(diffuse_color * diffuse_modulator + specular_color * specular_modulator);
@@ -255,7 +258,7 @@ void FillUpperTriangle(const Color& diffuse_color, const Color& specular_color, 
         std::swap(middle_norm, lowest_norm);
     }
 
-    for (; real_x <= top_x; ++x, real_x += dx) {
+    for (; real_x < top_x; ++x, real_x += dx) {
         // real_y1, real_y2 -- y координаты отрезка в видимом пространстве, который будет нарисован на экране.
         double left_coeff =
             highest_proj(0) == lowest_proj(0) ? 1 : (real_x - lowest_proj(0)) / (highest_proj(0) - lowest_proj(0));
@@ -301,7 +304,7 @@ void FillUpperTriangle(const Color& diffuse_color, const Color& specular_color, 
         prev_real_y1 = real_y1;
         prev_real_y2 = real_y2;
     }
-    if (x + 1 < frame->Height()) {
+    if (x + 1 < frame->Height() && highest_proj(0) >= -1) {
         real_x = top_x;
 
         double left_coeff =

@@ -11,6 +11,8 @@ public:
     World();
 
     void PushObject(const AffineTransform& pos, Object&& obj);
+    void PushDirectionalLightSource(const DirectionalLightSource& dls);
+    void PopDirectionalLightSource();
 
     [[nodiscard]] const std::vector<SubObject>& Objects() const;
     [[nodiscard]] const Color& AmbientLight() const;

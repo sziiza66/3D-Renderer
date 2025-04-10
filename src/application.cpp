@@ -1,7 +1,9 @@
 #include "application.h"
+#include <unistd.h>
 
 #include <fstream>
 
+#include "linalg.h"
 #include "model/utility/simple_obj_parse.h"
 
 namespace Renderer3D {
@@ -62,8 +64,13 @@ void Application::HandleLoopIteration(const sf::Sprite& sprite, sf::Texture* tex
         }
     }
 
+    if (light_flag_ != 0) {
+        --light_flag_;
+    }
+
     frame_ = renderer_.RenderFrame(world_.Objects(), spectator_.Position(), spectator_.Camera(), world_.AmbientLight(),
                                    world_.DirectionalLightSources(), std::move(frame_));
+
     DrawFrame(frame_, sprite, texture);
 }
 
@@ -109,10 +116,39 @@ void Application::HandleTurnLeft() {
     spectator_.TurnLeft();
 }
 
-void Application::HandleLight() {
-    Object lamp;
-    lamp.PushPointLightSource(kDefaultLightSource);
-    world_.PushObject(spectator_.Position(), std::move(lamp));
+void Application::HandlePointLight() {
+    if (light_flag_ == 0) {
+        Object lamp;
+        lamp.PushPointLightSource(kDefaultPointLightSource);
+        world_.PushObject(spectator_.Position(), std::move(lamp));
+    }
+    light_flag_ = 2;
 }
+
+void Application::HandleSpotLight() {
+    if (light_flag_ == 0) {
+        Object lamp;
+        lamp.PushSpotLightSource(kDefaultSpotLightSource);
+        world_.PushObject(spectator_.Position(), std::move(lamp));
+    }
+    light_flag_ = 2;
+}
+
+void Application::HandleToggleSun() {
+    if (light_flag_ == 0) {
+        if (world_.DirectionalLightSources().empty()) {
+            world_.PushDirectionalLightSource(kDefaultDirectionalLightSource);
+        } else {
+            world_.PopDirectionalLightSource();
+        }
+    }
+    light_flag_ = 2;
+}
+
+// Бесит, что Vector3 не может быть constexpr
+const Application::SpotLightSource Application::kDefaultSpotLightSource = {
+    {0, 1, 0.9}, Vector3::UnitZ(), 0.0001, 0.008, 0.2, 8000};
+const Application::DirectionalLightSource Application::kDefaultDirectionalLightSource = {
+    {0.1, 0.1, 0.1}, (-Vector3::UnitX() + Vector3::UnitY()).normalized()};
 
 }  // namespace Renderer3D

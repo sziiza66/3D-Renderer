@@ -16,6 +16,8 @@ class Application {
     using Triangle = Kernel::Triangle;
     using Object = Kernel::Object;
     using PointLightSource = Kernel::PointLightSource;
+    using SpotLightSource = Kernel::SpotLightSource;
+    using DirectionalLightSource = Kernel::DirectionalLightSource;
     using Renderer = Kernel::Renderer;
     using Spectator = Kernel::Spectator;
     using World = Kernel::World;
@@ -45,19 +47,23 @@ private:
     void HandleBackward();
     void HandleTurnRight();
     void HandleTurnLeft();
-    void HandleLight();
+    void HandlePointLight();
+    void HandleSpotLight();
+    void HandleToggleSun();
 
 private:
-    static constexpr size_t kDefaultWindowWidth = 1920;
+    static constexpr size_t kDefaultWindowWidth = 1700;
     static constexpr size_t kDefaultWindowHeight = 1080;
     static constexpr double kSpectatorMovementSpeed = 0.2;
     static constexpr const char* kWindowName = "3D Renderer";
-    static constexpr PointLightSource kDefaultLightSource = {{1, 0.8, 1}, 0.0001, 0.008, 0.2};
+    static constexpr PointLightSource kDefaultPointLightSource = {{1, 0.8, 1}, 0.0001, 0.008, 0.2};
+    static const SpotLightSource kDefaultSpotLightSource;
+    static const DirectionalLightSource kDefaultDirectionalLightSource;
     // Моя попытка сделать обработку клавиш компактной и легко модифицируемой, если у этого варианта есть минусы, или
     // есть лучший аналог, я хотел бы знать.
     // Хотя один минус я вижу -- приходится задавать размер массива вручную, может заменить это сырой массив?
     // А ещё constexpr в этом случае вряд ли отличается от const (я не совсем уверен), но по идее это не проблема?
-    static constexpr std::array<KeyHandlerAssociation, 9> UsedKeysMapping = {
+    static constexpr std::array<KeyHandlerAssociation, 11> UsedKeysMapping = {
         KeyHandlerAssociation{sf::Keyboard::Z, &Application::HandleUp},
         KeyHandlerAssociation{sf::Keyboard::X, &Application::HandleDown},
         KeyHandlerAssociation{sf::Keyboard::A, &Application::HandleLeft},
@@ -66,7 +72,14 @@ private:
         KeyHandlerAssociation{sf::Keyboard::S, &Application::HandleBackward},
         KeyHandlerAssociation{sf::Keyboard::Q, &Application::HandleTurnLeft},
         KeyHandlerAssociation{sf::Keyboard::E, &Application::HandleTurnRight},
-        KeyHandlerAssociation{sf::Keyboard::L, &Application::HandleLight}};
+        KeyHandlerAssociation{sf::Keyboard::L, &Application::HandlePointLight},
+        KeyHandlerAssociation{sf::Keyboard::K, &Application::HandleSpotLight},
+        KeyHandlerAssociation{sf::Keyboard::T, &Application::HandleToggleSun}};
+
+private:
+    // Мне пришлось добавить это говно, если делать по-другому, то нуджно использовать другие ивенты sfml, а это раздует
+    // код...
+    uint8_t light_flag_ = 0;
 
 private:
     Spectator spectator_;
