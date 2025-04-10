@@ -1,6 +1,8 @@
 #include "renderer.h"
 
 #include <cassert>
+#include "light.h"
+#include "rasterizer.h"
 
 namespace Renderer3D::Kernel {
 
@@ -142,12 +144,13 @@ std::vector<Triangle> ClipAgainstZAxis(double near_dist, std::vector<Triangle>&&
 }
 
 void FetchAndTransformData(const std::vector<SubObject>& objects, std::vector<Triangle>* triangles,
-                           std::vector<PLSInSpace>* point_lights) {
+                           std::vector<PLSInSpace>* point_lights, std::vector<SLSInSpace>* spot_lights) {
     assert(triangles);
     assert(point_lights);
     // Тут и не нужен был костыль в качестве ind = 0 дефолтного аргумента функции, я просто затупил.
     size_t ind_tri = triangles->size();
     size_t ind_pls = point_lights->size();
+    size_t ind_sls = point_lights->size();
     for (const SubObject& sobj : objects) {
         for (const Triangle& triangle : sobj.obj.Triangles()) {
             triangles->emplace_back(triangle);
@@ -155,7 +158,10 @@ void FetchAndTransformData(const std::vector<SubObject>& objects, std::vector<Tr
         for (const PointLightSource& pls : sobj.obj.PointLightSources()) {
             point_lights->emplace_back(pls);
         }
-        FetchAndTransformData(sobj.obj.Subobjects(), triangles, point_lights);
+        for (const SpotLightSource& sls : sobj.obj.SpotLightSources()) {
+            spot_lights->emplace_back(sls);
+        }
+        FetchAndTransformData(sobj.obj.Subobjects(), triangles, point_lights, spot_lights);
         for (; ind_tri < triangles->size(); ++ind_tri) {
             (*triangles)[ind_tri].vertices = sobj.pos * (*triangles)[ind_tri].vertices;
             (*triangles)[ind_tri].vertex_normals = sobj.pos.rotation() * (*triangles)[ind_tri].vertex_normals;
@@ -163,22 +169,26 @@ void FetchAndTransformData(const std::vector<SubObject>& objects, std::vector<Tr
         for (; ind_pls < point_lights->size(); ++ind_pls) {
             (*point_lights)[ind_pls].position += sobj.pos.translation();
         }
+        for (; ind_sls < spot_lights->size(); ++ind_sls) {
+            (*spot_lights)[ind_sls].position += sobj.pos.translation();
+            (*spot_lights)[ind_sls].source_data.direction =
+                sobj.pos.rotation() * (*spot_lights)[ind_sls].source_data.direction;
+        }
     }
 }
 
 }  // namespace
 
 Frame Renderer::RenderFrame(const std::vector<SubObject>& objects, const AffineTransform& camera_pos,
-                            const Camera& camera, const Color& ambient_light, Frame&& frame) {
-    triangle_buffer_.clear();
-    point_light_buffer_.clear();
-    preserved_buffer_.clear();
+                            const Camera& camera, const Color& ambient_light,
+                            std::vector<DirectionalLightSource> dir_light_buffer, Frame&& frame) {
+    ClearAllBuffers();
     // Да, эта функция либо через цикл, либо внутри с костылём. Единственный вариант -- изменить class World, но там
     // просто логически бред получится: в таком случае мир -- это либо бертка над единственным объектом класса Object,
     // либо контейнер, хранящий много объектов класса Object, но не имеющий своей системы координат, т.е. эти объекты
     // будут прибиты гвоздями к своему месту в мире. В данный момент мир -- это контейнер SubObject'ов, т.е. объектов с
     // их положением в пространстве, наиболее разумный вариант.
-    FetchAndTransformData(objects, &triangle_buffer_, &point_light_buffer_);
+    FetchAndTransformData(objects, &triangle_buffer_, &point_light_buffer_, &spot_light_buffer_);
     // Теперь тут обращается матрица аффинного преобразвания, а не просто Matrix4, скорее всего Eigen это оптимизирует.
     AffineTransform transformation_to_camera_space = camera_pos.inverse();
 
@@ -189,10 +199,25 @@ Frame Renderer::RenderFrame(const std::vector<SubObject>& objects, const AffineT
     for (PLSInSpace& pls : point_light_buffer_) {
         pls.position = transformation_to_camera_space * pls.position;
     }
+    for (SLSInSpace& sls : spot_light_buffer_) {
+        sls.position = transformation_to_camera_space * sls.position;
+        sls.source_data.direction = transformation_to_camera_space.rotation() * sls.source_data.direction;
+    }
+    for (DirectionalLightSource& dls : dir_light_buffer) {
+        dls.direction = transformation_to_camera_space.rotation() * dls.direction;
+    }
+
     // Clipping
     triangle_buffer_ = ClipAgainstZAxis(camera.NearDistance(), std::move(triangle_buffer_));
 
-    return rasterizer_.MakeFrame(triangle_buffer_, point_light_buffer_, ambient_light, camera, std::move(frame));
+    return rasterizer_.MakeFrame(triangle_buffer_, point_light_buffer_, spot_light_buffer_, ambient_light,
+                                 dir_light_buffer, camera, std::move(frame));
+}
+
+void Renderer::ClearAllBuffers() {
+    triangle_buffer_.clear();
+    point_light_buffer_.clear();
+    spot_light_buffer_.clear();
 }
 
 }  // namespace Renderer3D::Kernel

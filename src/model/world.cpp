@@ -13,8 +13,12 @@ const std::vector<SubObject>& World::Objects() const {
     return objects_;
 }
 
-[[nodiscard]] const Color& World::AmbientLight() const {
+const Color& World::AmbientLight() const {
     return ambient_light_;
+}
+
+const std::vector<DirectionalLightSource>& World::DirectionalLightSources() const {
+    return dir_light_sources_;
 }
 
 }  // namespace Renderer3D::Kernel

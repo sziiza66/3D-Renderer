@@ -14,12 +14,14 @@ public:
 
     [[nodiscard]] const std::vector<SubObject>& Objects() const;
     [[nodiscard]] const Color& AmbientLight() const;
+    [[nodiscard]] const std::vector<DirectionalLightSource>& DirectionalLightSources() const;
 
 private:
     constexpr static Color kDefaultAmbient = {0.1, 0.1, 0.1};
 
 private:
     std::vector<SubObject> objects_;
+    std::vector<DirectionalLightSource> dir_light_sources_;
     Color ambient_light_;
 };
 
