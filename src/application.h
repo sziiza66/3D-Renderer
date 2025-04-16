@@ -52,7 +52,7 @@ private:
     void HandleToggleSun(bool is_key_pressed);
 
 private:
-    static constexpr size_t kDefaultWindowWidth = 1700;
+    static constexpr size_t kDefaultWindowWidth = 1920;
     static constexpr size_t kDefaultWindowHeight = 1080;
     static constexpr double kSpectatorMovementSpeed = 0.2;
     static constexpr const char* kWindowName = "3D Renderer";
@@ -78,6 +78,11 @@ private:
     bool point_light_last_key_state_ = false;
     bool spot_light_last_key_state_ = false;
     bool dir_light_last_key_state_ = false;
+    //
+    AffineTransform* star_pos_;
+    AffineTransform* planet_pos_;
+    AffineTransform* moon_pos_;
+    AffineTransform* system_pos_;
 };
 
 }  // namespace Renderer3D

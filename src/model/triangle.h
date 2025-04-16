@@ -15,6 +15,7 @@ struct Triangle {
     Matrix3 vertex_normals = Matrix3::Identity();
     Color diffuse_reflection_color;
     Color specular_reflection_color;
+    Color emission_color;
     uint32_t specular_power = 1;
 };
 

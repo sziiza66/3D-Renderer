@@ -6,6 +6,7 @@
 #include "model/utility/simple_obj_parse.h"
 
 namespace Renderer3D {
+namespace {
 
 sf::Texture CreateTexture(size_t width, size_t height) {
     sf::Texture ret;
@@ -14,6 +15,8 @@ sf::Texture CreateTexture(size_t width, size_t height) {
     }
     return ret;
 }
+
+}  // namespace
 
 Application::Application(char* file_name, double scale)
     : spectator_(kDefaultWindowWidth * 1.0 / kDefaultWindowHeight, kSpectatorMovementSpeed),
@@ -26,6 +29,11 @@ Application::Application(char* file_name, double scale)
 }
 
 void Application::Run() {
+    star_pos_ = &world_.Objects()[0].obj.Subobjects()[0].pos;
+    planet_pos_ = &(world_.Objects()[0].obj.Subobjects()[1].obj.Subobjects()[0].pos);
+    moon_pos_ = &(world_.Objects()[0].obj.Subobjects()[1].obj.Subobjects()[1].pos);
+    system_pos_ = &(world_.Objects()[0].obj.Subobjects()[1].pos);
+
     while (window_.isOpen()) {
         HandleLoopIteration(sprite_, &texture_);
     }
@@ -72,6 +80,13 @@ void Application::HandleLoopIteration(const sf::Sprite& sprite, sf::Texture* tex
         }
     }
 
+
+    star_pos_->rotate(Eigen::AngleAxisd(std::numbers::pi / 1800, Vector3::UnitX()));
+    planet_pos_->rotate(Eigen::AngleAxisd(std::numbers::pi / 180, Vector3::UnitX()));
+    moon_pos_->rotate(Eigen::AngleAxisd(-std::numbers::pi / 180, Vector3::UnitZ()));
+    system_pos_->translation() = Eigen::AngleAxisd(std::numbers::pi / 500, Vector3::UnitX()) * system_pos_->translation();
+    moon_pos_->translation() = Eigen::AngleAxisd(-std::numbers::pi / 180, Vector3::UnitX()) * moon_pos_->translation();
+
     // Вся обработка клавиш сжимается в эти 4 строки, думаю, неплохо, и не должно влиять на производительность.
     for (const auto& association : UsedKeysMapping) {
         (*this.*association.handler)(sf::Keyboard::isKeyPressed(association.key));
@@ -86,9 +101,48 @@ void Application::HandleLoopIteration(const sf::Sprite& sprite, sf::Texture* tex
 Application::World Application::PopulateWorld(char* file_name, double scale) {
     World ret;
 
-    std::ifstream file_obj(file_name);
-    Object obj = Kernel::ParseObj(file_obj, kDefaultDiffuseColor, kDefaultSpecularColor, kDefaultSpecularPower, scale);
-    ret.PushObject(AffineTransform::Identity(), std::move(obj));
+    std::ifstream planet_obj("Planet.obj");
+    Object planet =
+        Kernel::ParseObj(planet_obj, kDefaultDiffuseColor, kDefaultSpecularColor, kDefaultSpecularPower, 3, "planet");
+
+    std::ifstream moon_obj("Moon.obj");
+    Object moon =
+        Kernel::ParseObj(moon_obj, kDefaultDiffuseColor, kDefaultSpecularColor, kDefaultSpecularPower, 1, "moon");
+
+    std::ifstream star_obj("Star.obj");
+    Object star =
+        Kernel::ParseObj(star_obj, kDefaultDiffuseColor, kDefaultSpecularColor, kDefaultSpecularPower, 7, "star");
+
+    AffineTransform planet_pos(AffineTransform::Identity());
+    planet_pos.translation() += Vector3{0, 0, 24};
+    planet_pos.rotate(Matrix3{Eigen::AngleAxisd(std::numbers::pi / 15, Vector3::UnitX())} *
+                    Matrix3{Eigen::AngleAxisd(-std::numbers::pi / 12, Vector3::UnitZ())} *
+                    Matrix3{Eigen::AngleAxisd(-std::numbers::pi / 10, Vector3::UnitY())});
+
+    AffineTransform star_pos(AffineTransform::Identity());
+    star_pos.translation() += Vector3{-15, 0, 30};
+    star_pos.rotate(Matrix3{Eigen::AngleAxisd(std::numbers::pi / 10, Vector3::UnitX())} *
+                    Matrix3{Eigen::AngleAxisd(std::numbers::pi / 5, Vector3::UnitZ())} *
+                    Matrix3{Eigen::AngleAxisd(std::numbers::pi / 6, Vector3::UnitY())});
+
+    AffineTransform moon_pos(AffineTransform::Identity());
+    moon_pos.translation() += Vector3{0, 0, 7};
+    moon_pos.rotate(Matrix3{Eigen::AngleAxisd(-std::numbers::pi / 24, Vector3::UnitX())} *
+                    Matrix3{Eigen::AngleAxisd(std::numbers::pi / 26, Vector3::UnitZ())} *
+                    Matrix3{Eigen::AngleAxisd(-std::numbers::pi / 20, Vector3::UnitY())});
+
+    Object planet_center;
+    planet_center.PushSubObject(AffineTransform::Identity(), std::move(planet));
+    planet_center.PushSubObject(moon_pos, std::move(moon));
+
+    star.PushPointLightSource(PointLightSource{{1.0, 1.0, 0.85}, 0.000001, 0.0008, 0.002});
+
+    Object star_center;
+    star_center.PushSubObject(AffineTransform::Identity(), std::move(star));
+    star_center.PushSubObject(planet_pos, std::move(planet_center));
+
+
+    ret.PushObject(star_pos, std::move(star_center));
 
     return ret;
 }

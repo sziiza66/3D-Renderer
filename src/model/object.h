@@ -17,6 +17,7 @@ public:
 
     [[nodiscard]] const std::vector<Triangle>& Triangles() const;
     [[nodiscard]] const std::vector<SubObject>& Subobjects() const;
+    [[nodiscard]] std::vector<SubObject>& Subobjects();
     [[nodiscard]] const std::vector<PointLightSource>& PointLightSources() const;
     [[nodiscard]] const std::vector<SpotLightSource>& SpotLightSources() const;
 

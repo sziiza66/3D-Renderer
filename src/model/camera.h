@@ -17,7 +17,7 @@ public:
     [[nodiscard]] const Matrix4& FrustumMatrix() const;
 
 private:
-    static constexpr double kDefaultFov = std::numbers::pi / 2;
+    static constexpr double kDefaultFov = std::numbers::pi / 2.1;
     static constexpr double kDefaultNearPlaneDistance = 0.1;
 
 private:

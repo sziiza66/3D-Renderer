@@ -26,6 +26,10 @@ const std::vector<SubObject>& Object::Subobjects() const {
     return subobjects_;
 }
 
+std::vector<SubObject>& Object::Subobjects() {
+    return subobjects_;
+}
+
 const std::vector<PointLightSource>& Object::PointLightSources() const {
     return point_light_sources_;
 }

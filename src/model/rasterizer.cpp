@@ -108,6 +108,7 @@ void ApplyDirectionalLighting(const DirectionalLightSource& dls, uint32_t specul
 }
 
 DiscreteColor CalculateColorOfPixel(const Color& diffuse_color, const Color& specular_color, const Color& ambient,
+                                    const Color& emission_color,
                                     const std::vector<DirectionalLightSource>& directional_lights,
                                     uint32_t specular_pow, const std::vector<PLSInSpace>& point_lights,
                                     const std::vector<SLSInSpace>& spot_lights, const Vector3& point,
@@ -126,7 +127,7 @@ DiscreteColor CalculateColorOfPixel(const Color& diffuse_color, const Color& spe
         ApplyDirectionalLighting(dls, specular_pow, point, normal, &diffuse_modulator, &specular_modulator);
     }
 
-    return MakeDiscrete(diffuse_color * diffuse_modulator + specular_color * specular_modulator);
+    return MakeDiscrete(emission_color + diffuse_color * diffuse_modulator + specular_color * specular_modulator);
 }
 
 Vector3 InterpolatePointBack(const Vector3& interpolated_point) {
@@ -135,12 +136,12 @@ Vector3 InterpolatePointBack(const Vector3& interpolated_point) {
 }
 
 void FillSegment(const Color& diffuse_color, const Color& specular_color, const Color& ambient,
-                 const std::vector<DirectionalLightSource>& directional_lights, uint32_t specular_pow,
-                 const std::vector<PLSInSpace>& point_lights, const std::vector<SLSInSpace>& spot_lights,
-                 const Vector3& interpolated_point1, const Vector3& interpolated_point2,
-                 const Vector3& interpolated_normal1, const Vector3& interpolated_normal2, double real_y1,
-                 double real_y2, size_t x, double real_z, double z_diff_y, double real_z_diff_y, Frame* frame,
-                 ZBuffer* z_buffer_) {
+                 const Color& emission_color, const std::vector<DirectionalLightSource>& directional_lights,
+                 uint32_t specular_pow, const std::vector<PLSInSpace>& point_lights,
+                 const std::vector<SLSInSpace>& spot_lights, const Vector3& interpolated_point1,
+                 const Vector3& interpolated_point2, const Vector3& interpolated_normal1,
+                 const Vector3& interpolated_normal2, double real_y1, double real_y2, size_t x, double real_z,
+                 double z_diff_y, double real_z_diff_y, Frame* frame, ZBuffer* z_buffer_) {
     assert(x < frame->Height());
 
     Vector3 interpolated_point = interpolated_point1;
@@ -163,9 +164,9 @@ void FillSegment(const Color& diffuse_color, const Color& specular_color, const 
         if (real_z < (*z_buffer_)(x, y)) {
             (*z_buffer_)(x, y) = real_z;
             Vector3 point = InterpolatePointBack(interpolated_point);
-            (*frame)(x, y) =
-                CalculateColorOfPixel(diffuse_color, specular_color, ambient, directional_lights, specular_pow,
-                                      point_lights, spot_lights, point, (interpolated_normal * point(2)).normalized());
+            (*frame)(x, y) = CalculateColorOfPixel(diffuse_color, specular_color, ambient, emission_color,
+                                                   directional_lights, specular_pow, point_lights, spot_lights, point,
+                                                   (interpolated_normal * point(2)).normalized());
         }
         interpolated_point += interpolated_point_inc * kSideOfTheCube / frame->Width();
         interpolated_normal += interpolated_normal_inc * kSideOfTheCube / frame->Width();
@@ -177,7 +178,7 @@ double CalcVecProdXY(const Vector3& v1, const Vector3& v2) {
 }
 
 std::tuple<double, double, double, size_t> FillLowerTriangle(
-    const Color& diffuse_color, const Color& specular_color, const Color& ambient,
+    const Color& diffuse_color, const Color& specular_color, const Color& ambient, const Color& emission_color,
     const std::vector<DirectionalLightSource>& directional_lights, uint32_t specular_pow,
     const std::vector<PLSInSpace>& point_lights, const std::vector<SLSInSpace>& spot_lights, const Vector3& lowest_proj,
     Vector3 middle_proj, Vector3 highest_proj, const Vector3& lowest, Vector3 middle, Vector3 highest,
@@ -234,9 +235,10 @@ std::tuple<double, double, double, size_t> FillLowerTriangle(
         double real_z = lowest_proj(2) + (highest_proj(2) - lowest_proj(2)) * left_coeff;
 
         // Рисуем этот отрезок
-        FillSegment(diffuse_color, specular_color, ambient, directional_lights, specular_pow, point_lights, spot_lights,
-                    interpolated_point1, interpolated_point2, interpolated_normal1, interpolated_normal2,
-                    actual_real_y1, actual_real_y2, x, real_z, z_diff_y, real_z_diff_y, frame, z_buffer_);
+        FillSegment(diffuse_color, specular_color, ambient, emission_color, directional_lights, specular_pow,
+                    point_lights, spot_lights, interpolated_point1, interpolated_point2, interpolated_normal1,
+                    interpolated_normal2, actual_real_y1, actual_real_y2, x, real_z, z_diff_y, real_z_diff_y, frame,
+                    z_buffer_);
         prev_real_y1 = real_y1;
         prev_real_y2 = real_y2;
     }
@@ -244,12 +246,13 @@ std::tuple<double, double, double, size_t> FillLowerTriangle(
 }
 
 void FillUpperTriangle(const Color& diffuse_color, const Color& specular_color, const Color& ambient,
-                       const std::vector<DirectionalLightSource>& directional_lights, uint32_t specular_pow,
-                       const std::vector<PLSInSpace>& point_lights, const std::vector<SLSInSpace>& spot_lights,
-                       Vector3 lowest_proj, Vector3 middle_proj, const Vector3& highest_proj, Vector3 lowest,
-                       Vector3 middle, const Vector3& highest, Vector3 lowest_norm, Vector3 middle_norm,
-                       const Vector3& highest_norm, double real_z_diff_y, double z_diff_y, double prev_real_y1,
-                       double prev_real_y2, double real_x, size_t x, Frame* frame, ZBuffer* z_buffer_) {
+                       const Color& emission_color, const std::vector<DirectionalLightSource>& directional_lights,
+                       uint32_t specular_pow, const std::vector<PLSInSpace>& point_lights,
+                       const std::vector<SLSInSpace>& spot_lights, Vector3 lowest_proj, Vector3 middle_proj,
+                       const Vector3& highest_proj, Vector3 lowest, Vector3 middle, const Vector3& highest,
+                       Vector3 lowest_norm, Vector3 middle_norm, const Vector3& highest_norm, double real_z_diff_y,
+                       double z_diff_y, double prev_real_y1, double prev_real_y2, double real_x, size_t x, Frame* frame,
+                       ZBuffer* z_buffer_) {
     double dx = kSideOfTheCube / frame->Height();
     double top_x = (highest_proj(0) <= 1 ? highest_proj(0) : 1);
 
@@ -299,9 +302,10 @@ void FillUpperTriangle(const Color& diffuse_color, const Color& specular_color, 
         double real_z = lowest_proj(2) + (highest_proj(2) - lowest_proj(2)) * left_coeff;
 
         // Рисуем этот отрезок
-        FillSegment(diffuse_color, specular_color, ambient, directional_lights, specular_pow, point_lights, spot_lights,
-                    interpolated_point1, interpolated_point2, interpolated_normal1, interpolated_normal2,
-                    actual_real_y1, actual_real_y2, x, real_z, z_diff_y, real_z_diff_y, frame, z_buffer_);
+        FillSegment(diffuse_color, specular_color, ambient, emission_color, directional_lights, specular_pow,
+                    point_lights, spot_lights, interpolated_point1, interpolated_point2, interpolated_normal1,
+                    interpolated_normal2, actual_real_y1, actual_real_y2, x, real_z, z_diff_y, real_z_diff_y, frame,
+                    z_buffer_);
         prev_real_y1 = real_y1;
         prev_real_y2 = real_y2;
     }
@@ -351,16 +355,17 @@ void FillUpperTriangle(const Color& diffuse_color, const Color& specular_color, 
         double real_z = lowest_proj(2) + (highest_proj(2) - lowest_proj(2)) * left_coeff;
 
         // Рисуем этот отрезок
-        FillSegment(diffuse_color, specular_color, ambient, directional_lights, specular_pow, point_lights, spot_lights,
-                    interpolated_point1, interpolated_point2, interpolated_normal1, interpolated_normal2,
-                    actual_real_y1, actual_real_y2, x, real_z, z_diff_y, real_z_diff_y, frame, z_buffer_);
+        FillSegment(diffuse_color, specular_color, ambient, emission_color, directional_lights, specular_pow,
+                    point_lights, spot_lights, interpolated_point1, interpolated_point2, interpolated_normal1,
+                    interpolated_normal2, actual_real_y1, actual_real_y2, x, real_z, z_diff_y, real_z_diff_y, frame,
+                    z_buffer_);
     }
 }
 
 void DrawTriangle(const Triangle& triangle, const TriMatrix& projected_vertices,
                   const std::vector<PLSInSpace>& point_lights, const std::vector<SLSInSpace>& spot_lights,
-                  const Color& ambient, const std::vector<DirectionalLightSource>& directional_lights, Frame* frame,
-                  ZBuffer* z_buffer_) {
+                  const Color& ambient, const Color& emission_color,
+                  const std::vector<DirectionalLightSource>& directional_lights, Frame* frame, ZBuffer* z_buffer_) {
     // вершины треугольника, отсортированные по Ox.
     auto [lowest_proj, middle_proj, highest_proj, lowest, middle, highest, lowest_norm, middle_norm, highest_norm] =
         GetVerticalOrderOfVerticesAndAttributes(projected_vertices, triangle);
@@ -420,12 +425,13 @@ void DrawTriangle(const Triangle& triangle, const TriMatrix& projected_vertices,
     highest_norm *= highest(2);
     // --------------------
 
-    auto [prev_real_y1, prev_real_y2, real_x2, x2] = FillLowerTriangle(
-        triangle.diffuse_reflection_color, triangle.specular_reflection_color, ambient, directional_lights,
-        triangle.specular_power, point_lights, spot_lights, lowest_proj, middle_proj, highest_proj, lowest, middle,
-        highest, lowest_norm, middle_norm, highest_norm, real_z_diff_y, z_diff_y, real_x, x, frame, z_buffer_);
+    auto [prev_real_y1, prev_real_y2, real_x2, x2] =
+        FillLowerTriangle(triangle.diffuse_reflection_color, triangle.specular_reflection_color, ambient,
+                          emission_color, directional_lights, triangle.specular_power, point_lights, spot_lights,
+                          lowest_proj, middle_proj, highest_proj, lowest, middle, highest, lowest_norm, middle_norm,
+                          highest_norm, real_z_diff_y, z_diff_y, real_x, x, frame, z_buffer_);
 
-    FillUpperTriangle(triangle.diffuse_reflection_color, triangle.specular_reflection_color, ambient,
+    FillUpperTriangle(triangle.diffuse_reflection_color, triangle.specular_reflection_color, ambient, emission_color,
                       directional_lights, triangle.specular_power, point_lights, spot_lights, lowest_proj, middle_proj,
                       highest_proj, lowest, middle, highest, lowest_norm, middle_norm, highest_norm, real_z_diff_y,
                       z_diff_y, prev_real_y1, prev_real_y2, real_x2, x2, frame, z_buffer_);
@@ -456,8 +462,8 @@ Frame BufferRasterizer::MakeFrame(const std::vector<Triangle>& triangles, const 
     for (const Triangle& triangle : triangles) {
         // В целях оптимизации проективное преобразование пришлось перенести сюда.
         TriMatrix projected_vertices = ApplyFrustumTransformationOnTriangle(triangle, camera);
-        DrawTriangle(triangle, projected_vertices, point_lights, spot_lights, ambient, directional_lights, &ret,
-                     &z_buffer_);
+        DrawTriangle(triangle, projected_vertices, point_lights, spot_lights, ambient, triangle.emission_color,
+                     directional_lights, &ret, &z_buffer_);
     }
     return ret;
 }

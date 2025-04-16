@@ -22,6 +22,10 @@ const std::vector<SubObject>& World::Objects() const {
     return objects_;
 }
 
+std::vector<SubObject>& World::Objects() {
+    return objects_;
+}
+
 const Color& World::AmbientLight() const {
     return ambient_light_;
 }

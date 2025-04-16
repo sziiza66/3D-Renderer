@@ -19,9 +19,9 @@ else()
     set(CMAKE_CXX_FLAGS_DEBUG "-g")
     if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
         # Оставил -msse2 и -O2 и еще два флага, которые не дложны предплагать поддержку чего-то выше sse2.
-        set(CMAKE_CXX_FLAGS_RELEASE "-O2 -march=native -mtune=native -msse2")
+        # set(CMAKE_CXX_FLAGS_RELEASE "-O2 -march=native -mtune=native -msse2")
         # Для демонстрации буду использовать полный вариант, конечно.
-        # set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -mtune=native -fomit-frame-pointer -fno-semantic-interposition -ftree-vectorize -flto -unroll-loops -mavx2 -mbmi -mbmi2 -mpopcnt -mlzcnt -mfma -mabm")
+        set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -mtune=native -fomit-frame-pointer -fno-semantic-interposition -ftree-vectorize -flto -unroll-loops -mavx2 -mbmi -mbmi2 -mpopcnt -mlzcnt -mfma -mabm")
     else()
         # Не уверен, что остальные флаги не gcc-specific.
         set(CMAKE_CXX_FLAGS_RELEASE "-O2 -msse2")

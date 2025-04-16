@@ -15,6 +15,7 @@ public:
     void PopDirectionalLightSource();
 
     [[nodiscard]] const std::vector<SubObject>& Objects() const;
+    [[nodiscard]] std::vector<SubObject>& Objects();
     [[nodiscard]] const Color& AmbientLight() const;
     [[nodiscard]] const std::vector<DirectionalLightSource>& DirectionalLightSources() const;
 
