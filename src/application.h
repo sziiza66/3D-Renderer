@@ -90,6 +90,8 @@ private:
     Renderer renderer_;
     Frame frame_;
     World world_;
+    sf::Texture texture_;
+    sf::Sprite sprite_;
 };
 
 }  // namespace Renderer3D

@@ -6,6 +6,6 @@ namespace Renderer3D {
 
 std::tuple<char*, double> ParseCMD(int argc, char** argv);
 
-void PrintReference();
+void PrintInfo();
 
 }  // namespace Renderer3D

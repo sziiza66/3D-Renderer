@@ -22,7 +22,7 @@ std::tuple<char*, double> ParseCMD(int argc, char** argv) {
     return {argv[1], scale};
 }
 
-void PrintReference() {
+void PrintInfo() {
     std::cout
         << "Intended usage of the program:\n./renderer [path] [scale]\n[path] is the path to .obj file, [scale] is "
            "a real number.\nObject in [path] will be rendered [scale] times bigger than it is in the "

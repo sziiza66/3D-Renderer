@@ -8,13 +8,26 @@ option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 set(CMAKE_BUILD_TYPE Release)
 # set(CMAKE_BUILD_TYPE Debug)
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
-# Я включил все мне известные флаги оптимизации в релиз сборку, -ffast-math может быть сомнительным разве что, 
-# с ним нельзя использовать isinf и вообще с +-inf? как я понял.
-# По сравнению с дебаг сборкой летает.
-# P.s. Да, я поймал UB c -ffast-math. 
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -mtune=native -flto -unroll-loops -mavx2 -mbmi -mbmi2 -mpopcnt -mlzcnt -mfma -mabm")
+if (MSVC)
+    # warning level 4
+    add_compile_options(/W4)
+    set(CMAKE_CXX_FLAGS_DEBUG "/Od")
+    set(CMAKE_CXX_FLAGS_RELEASE "/O2")
+else()
+    # additional warnings
+    add_compile_options(-Wall -Wextra -Wpedantic)
+    set(CMAKE_CXX_FLAGS_DEBUG "-g")
+    if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
+        # Оставил -msse2 и -O2 и еще два флага, которые не дложны предплагать поддержку чего-то выше sse2.
+        set(CMAKE_CXX_FLAGS_RELEASE "-O2 -march=native -mtune=native -msse2")
+        # Для демонстрации буду использовать полный вариант, конечно.
+        # set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -mtune=native -fomit-frame-pointer -fno-semantic-interposition -ftree-vectorize -flto -unroll-loops -mavx2 -mbmi -mbmi2 -mpopcnt -mlzcnt -mfma -mabm")
+    else()
+        set(CMAKE_CXX_FLAGS_RELEASE "-O2 -msse2")
+    endif()
+endif()
+
+message(${CMAKE_CXX_FLAGS_RELEASE})
 
 include(FetchContent)
 FetchContent_Declare(SFML

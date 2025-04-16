@@ -1,5 +1,4 @@
 #include "application.h"
-#include <unistd.h>
 
 #include <fstream>
 
@@ -8,24 +7,27 @@
 
 namespace Renderer3D {
 
+sf::Texture CreateTexture(size_t width, size_t height) {
+    sf::Texture ret;
+    if (!ret.create(width, height)) {
+        throw std::runtime_error("Unable to create texture.\n");
+    }
+    return ret;
+}
+
 Application::Application(char* file_name, double scale)
     : spectator_(kDefaultWindowWidth * 1.0 / kDefaultWindowHeight, kSpectatorMovementSpeed),
       window_(sf::VideoMode(kDefaultWindowWidth, kDefaultWindowHeight), kWindowName),
       frame_(Frame::SHeight{kDefaultWindowHeight}, Frame::SWidth{kDefaultWindowWidth}),
-      world_(PopulateWorld(file_name, scale)) {
+      world_(PopulateWorld(file_name, scale)),
+      texture_(CreateTexture(kDefaultWindowWidth, kDefaultWindowHeight)) {
+    sprite_.setTexture(texture_);
+    window_.setKeyRepeatEnabled(false);
 }
 
 void Application::Run() {
-    sf::Texture texture;
-    sf::Sprite sprite;
-    if (!texture.create(kDefaultWindowWidth, kDefaultWindowHeight)) {
-        throw std::runtime_error("Unable to create texture.\n");
-    }
-    sprite.setTexture(texture);
-    window_.setKeyRepeatEnabled(false);
-
     while (window_.isOpen()) {
-        HandleLoopIteration(sprite, &texture);
+        HandleLoopIteration(sprite_, &texture_);
     }
 }
 

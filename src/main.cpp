@@ -8,7 +8,7 @@ int main(int argc, char** argv) {
     try {
         auto [filename, scale] = Renderer3D::ParseCMD(argc, argv);
         if (!filename) {
-            Renderer3D::PrintReference();
+            Renderer3D::PrintInfo();
             return 0;
         }
         Renderer3D::Application app(filename, scale);
