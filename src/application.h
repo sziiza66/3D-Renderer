@@ -58,6 +58,7 @@ private:
     static constexpr const char* kWindowName = "3D Renderer";
     static constexpr Color kDefaultDiffuseColor = {1, 1, 1};
     static constexpr Color kDefaultSpecularColor = {0.9, 0.8, 0.5};
+    static constexpr Color kDefaultEmissionColor = {0, 0, 0};
     static constexpr uint32_t kDefaultSpecularPower = 50;
     static constexpr PointLightSource kDefaultPointLightSource = {{1, 0.8, 1}, 0.0001, 0.008, 0.2};
     static const SpotLightSource kDefaultSpotLightSource;
