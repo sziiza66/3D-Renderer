@@ -24,7 +24,7 @@ class Application {
 
     struct KeyHandlerAssociation {
         sf::Keyboard::Key key;
-        void (Application::*handler)();
+        void (Application::*handler)(bool is_key_pressed);
     };
 
 public:
@@ -39,17 +39,17 @@ private:
 private:
     static World PopulateWorld(char* file_name, double scale);
 
-    void HandleUp();
-    void HandleDown();
-    void HandleLeft();
-    void HandleRight();
-    void HandleForward();
-    void HandleBackward();
-    void HandleTurnRight();
-    void HandleTurnLeft();
-    void HandlePointLight();
-    void HandleSpotLight();
-    void HandleToggleSun();
+    void HandleUp(bool is_key_pressed);
+    void HandleDown(bool is_key_pressed);
+    void HandleLeft(bool is_key_pressed);
+    void HandleRight(bool is_key_pressed);
+    void HandleForward(bool is_key_pressed);
+    void HandleBackward(bool is_key_pressed);
+    void HandleTurnRight(bool is_key_pressed);
+    void HandleTurnLeft(bool is_key_pressed);
+    void HandlePointLight(bool is_key_pressed);
+    void HandleSpotLight(bool is_key_pressed);
+    void HandleToggleSun(bool is_key_pressed);
 
 private:
     static constexpr size_t kDefaultWindowWidth = 1700;
@@ -62,27 +62,6 @@ private:
     static constexpr PointLightSource kDefaultPointLightSource = {{1, 0.8, 1}, 0.0001, 0.008, 0.2};
     static const SpotLightSource kDefaultSpotLightSource;
     static const DirectionalLightSource kDefaultDirectionalLightSource;
-    // Моя попытка сделать обработку клавиш компактной и легко модифицируемой, если у этого варианта есть минусы, или
-    // есть лучший аналог, я хотел бы знать.
-    // Хотя один минус я вижу -- приходится задавать размер массива вручную, может заменить это сырой массив?
-    // А ещё constexpr в этом случае вряд ли отличается от const (я не совсем уверен), но по идее это не проблема?
-    static constexpr std::array<KeyHandlerAssociation, 11> UsedKeysMapping = {
-        KeyHandlerAssociation{sf::Keyboard::Z, &Application::HandleUp},
-        KeyHandlerAssociation{sf::Keyboard::X, &Application::HandleDown},
-        KeyHandlerAssociation{sf::Keyboard::A, &Application::HandleLeft},
-        KeyHandlerAssociation{sf::Keyboard::D, &Application::HandleRight},
-        KeyHandlerAssociation{sf::Keyboard::W, &Application::HandleForward},
-        KeyHandlerAssociation{sf::Keyboard::S, &Application::HandleBackward},
-        KeyHandlerAssociation{sf::Keyboard::Q, &Application::HandleTurnLeft},
-        KeyHandlerAssociation{sf::Keyboard::E, &Application::HandleTurnRight},
-        KeyHandlerAssociation{sf::Keyboard::L, &Application::HandlePointLight},
-        KeyHandlerAssociation{sf::Keyboard::K, &Application::HandleSpotLight},
-        KeyHandlerAssociation{sf::Keyboard::T, &Application::HandleToggleSun}};
-
-private:
-    // Мне пришлось добавить это говно, если делать по-другому, то нуджно использовать другие ивенты sfml, а это раздует
-    // код...
-    uint8_t light_flag_ = 0;
 
 private:
     Spectator spectator_;
@@ -90,8 +69,15 @@ private:
     Renderer renderer_;
     Frame frame_;
     World world_;
+    //
     sf::Texture texture_;
     sf::Sprite sprite_;
+    // Эта (эти) переменная нужна, чтобы каждый кард, пока зажата кнопка, не спанился новый источник света. Если бы static
+    // переменные в функции-члене класса были бы уникальны тольк в рамках дной инстанции, было бы удобно держать её в
+    // хендлерах.
+    bool point_light_last_key_state_ = false;
+    bool spot_light_last_key_state_ = false;
+    bool dir_light_last_key_state_ = false;
 };
 
 }  // namespace Renderer3D

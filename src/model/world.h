@@ -19,7 +19,7 @@ public:
     [[nodiscard]] const std::vector<DirectionalLightSource>& DirectionalLightSources() const;
 
 private:
-    constexpr static Color kDefaultAmbient = {0.1, 0.1, 0.1};
+    constexpr static Color kDefaultAmbient = {0.12, 0.12, 0.12};
 
 private:
     std::vector<SubObject> objects_;

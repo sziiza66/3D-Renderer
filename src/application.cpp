@@ -47,6 +47,19 @@ void Application::DrawFrame(const Frame& frame, const sf::Sprite& sprite, sf::Te
 
 void Application::HandleLoopIteration(const sf::Sprite& sprite, sf::Texture* texture) {
     assert(sprite.getTexture() == texture);
+    // Перенёс этот массив из полей класса сюда.
+    static constexpr std::array<KeyHandlerAssociation, 11> UsedKeysMapping = {
+        KeyHandlerAssociation{sf::Keyboard::Z, &Application::HandleUp},
+        KeyHandlerAssociation{sf::Keyboard::X, &Application::HandleDown},
+        KeyHandlerAssociation{sf::Keyboard::A, &Application::HandleLeft},
+        KeyHandlerAssociation{sf::Keyboard::D, &Application::HandleRight},
+        KeyHandlerAssociation{sf::Keyboard::W, &Application::HandleForward},
+        KeyHandlerAssociation{sf::Keyboard::S, &Application::HandleBackward},
+        KeyHandlerAssociation{sf::Keyboard::Q, &Application::HandleTurnLeft},
+        KeyHandlerAssociation{sf::Keyboard::E, &Application::HandleTurnRight},
+        KeyHandlerAssociation{sf::Keyboard::L, &Application::HandlePointLight},
+        KeyHandlerAssociation{sf::Keyboard::K, &Application::HandleSpotLight},
+        KeyHandlerAssociation{sf::Keyboard::T, &Application::HandleToggleSun}};
 
     sf::Event event{};
     while (window_.pollEvent(event)) {
@@ -61,13 +74,7 @@ void Application::HandleLoopIteration(const sf::Sprite& sprite, sf::Texture* tex
 
     // Вся обработка клавиш сжимается в эти 4 строки, думаю, неплохо, и не должно влиять на производительность.
     for (const auto& association : UsedKeysMapping) {
-        if (sf::Keyboard::isKeyPressed(association.key)) {
-            (*this.*association.handler)();
-        }
-    }
-
-    if (light_flag_ != 0) {
-        --light_flag_;
+        (*this.*association.handler)(sf::Keyboard::isKeyPressed(association.key));
     }
 
     frame_ = renderer_.RenderFrame(world_.Objects(), spectator_.Position(), spectator_.Camera(), world_.AmbientLight(),
@@ -86,65 +93,81 @@ Application::World Application::PopulateWorld(char* file_name, double scale) {
     return ret;
 }
 
-void Application::HandleUp() {
-    spectator_.MoveUp();
+void Application::HandleUp(bool is_key_pressed) {
+    if (is_key_pressed) {
+        spectator_.MoveUp();
+    }
 }
 
-void Application::HandleDown() {
-    spectator_.MoveDown();
+void Application::HandleDown(bool is_key_pressed) {
+    if (is_key_pressed) {
+        spectator_.MoveDown();
+    }
 }
 
-void Application::HandleLeft() {
-    spectator_.MoveLeft();
+void Application::HandleLeft(bool is_key_pressed) {
+    if (is_key_pressed) {
+        spectator_.MoveLeft();
+    }
 }
 
-void Application::HandleRight() {
-    spectator_.MoveRight();
+void Application::HandleRight(bool is_key_pressed) {
+    if (is_key_pressed) {
+        spectator_.MoveRight();
+    }
 }
 
-void Application::HandleForward() {
-    spectator_.MoveForward();
+void Application::HandleForward(bool is_key_pressed) {
+    if (is_key_pressed) {
+        spectator_.MoveForward();
+    }
 }
 
-void Application::HandleBackward() {
-    spectator_.MoveBackward();
+void Application::HandleBackward(bool is_key_pressed) {
+    if (is_key_pressed) {
+        spectator_.MoveBackward();
+    }
 }
 
-void Application::HandleTurnRight() {
-    spectator_.TurnRight();
+void Application::HandleTurnRight(bool is_key_pressed) {
+    if (is_key_pressed) {
+        spectator_.TurnRight();
+    }
 }
 
-void Application::HandleTurnLeft() {
-    spectator_.TurnLeft();
+void Application::HandleTurnLeft(bool is_key_pressed) {
+    if (is_key_pressed) {
+        spectator_.TurnLeft();
+    }
 }
 
-void Application::HandlePointLight() {
-    if (light_flag_ == 0) {
+void Application::HandlePointLight(bool is_key_pressed) {
+    if (!point_light_last_key_state_ && is_key_pressed) {
         Object lamp;
         lamp.PushPointLightSource(kDefaultPointLightSource);
         world_.PushObject(spectator_.Position(), std::move(lamp));
     }
-    light_flag_ = 2;
+    point_light_last_key_state_ = is_key_pressed;
 }
 
-void Application::HandleSpotLight() {
-    if (light_flag_ == 0) {
+void Application::HandleSpotLight(bool is_key_pressed) {
+    if (!spot_light_last_key_state_ && is_key_pressed) {
         Object lamp;
         lamp.PushSpotLightSource(kDefaultSpotLightSource);
         world_.PushObject(spectator_.Position(), std::move(lamp));
     }
-    light_flag_ = 2;
+    spot_light_last_key_state_ = is_key_pressed;
 }
 
-void Application::HandleToggleSun() {
-    if (light_flag_ == 0) {
+void Application::HandleToggleSun(bool is_key_pressed) {
+    if (!dir_light_last_key_state_ && is_key_pressed) {
         if (world_.DirectionalLightSources().empty()) {
             world_.PushDirectionalLightSource(kDefaultDirectionalLightSource);
         } else {
             world_.PopDirectionalLightSource();
         }
     }
-    light_flag_ = 2;
+    dir_light_last_key_state_ = is_key_pressed;
 }
 
 // Бесит, что Vector3 не может быть constexpr

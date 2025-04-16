@@ -23,7 +23,8 @@ auto GetVerticalOrderOfVerticesAndAttributes(const TriMatrix& projected_vertices
     if (projected_vertices(0, ret[1]) < projected_vertices(0, ret[0])) {
         std::swap(ret[1], ret[0]);
     }
-    // Ужас
+    // Возвращаю tuple векторов, хотя можно матрицы, но в последнем случае будет больше боли в написании кода
+    // интерполяции, хотя и перспектив птимизации, наверное, больше.
     return std::tuple<Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3>{
         projected_vertices.col(ret[0]).head(3), projected_vertices.col(ret[1]).head(3),
         projected_vertices.col(ret[2]).head(3), triangle.vertices.col(ret[0]).head(3),

@@ -23,11 +23,12 @@ else()
         # Для демонстрации буду использовать полный вариант, конечно.
         # set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -mtune=native -fomit-frame-pointer -fno-semantic-interposition -ftree-vectorize -flto -unroll-loops -mavx2 -mbmi -mbmi2 -mpopcnt -mlzcnt -mfma -mabm")
     else()
+        # Не уверен, что остальные флаги не gcc-specific.
         set(CMAKE_CXX_FLAGS_RELEASE "-O2 -msse2")
     endif()
 endif()
+message(CMAKE_CXX_FLAGS_RELEASE = ${CMAKE_CXX_FLAGS_RELEASE})
 
-message(${CMAKE_CXX_FLAGS_RELEASE})
 
 include(FetchContent)
 FetchContent_Declare(SFML
